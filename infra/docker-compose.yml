@@ -1,0 +1,55 @@
+services:
+  # ─── PostgreSQL demo database ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: udc
+      POSTGRES_PASSWORD: udc_secret
+      POSTGRES_DB: udc_demo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U udc -d udc_demo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── FastAPI backend ──────────────────────────────────────────────────────
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://udc:udc_secret@postgres:5432/udc_demo
+    volumes:
+      - ../backend/src:/app/src      # hot-reload source
+      - duckdb_data:/app/data        # DuckDB file persistence
+    ports:
+      - "8000:8000"
+
+  # ─── React / Vite frontend ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules            # prevent host node_modules from clobbering container
+    ports:
+      - "5173:5173"
+
+volumes:
+  postgres_data:
+  duckdb_data:
