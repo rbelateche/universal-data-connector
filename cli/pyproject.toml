@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "udc-cli"
+version = "0.1.0"
+description = "CLI entry-point for Universal Data Connector"
+requires-python = ">=3.11"
+dependencies = [
+    "udc @ file://../backend",
+    "typer>=0.12.0",
+    "rich>=13.7.0",
+]
+
+[project.scripts]
+udc = "udc_cli.main:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/udc_cli"]
