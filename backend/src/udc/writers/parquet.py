@@ -23,6 +23,4 @@ class ParquetWriter(BaseWriter):
         if not rows:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        pd.DataFrame(rows).to_parquet(
-            self.path, index=False, compression=self.compression
-        )
+        pd.DataFrame(rows).to_parquet(self.path, index=False, compression=self.compression)

@@ -43,18 +43,20 @@ class IncrementalSyncEngine:
             self._conn.execute(_INIT_SQL)
         return self._conn
 
-    def get_watermark(
-        self, connector_id: str, table_name: str
-    ) -> tuple[str | None, Any]:
+    def get_watermark(self, connector_id: str, table_name: str) -> tuple[str | None, Any]:
         """Return ``(watermark_col, watermark_val)`` or ``(None, None)`` on first run."""
-        row = self._get_conn().execute(
-            """
+        row = (
+            self._get_conn()
+            .execute(
+                """
             SELECT watermark_col, watermark_val
             FROM sync_watermarks
             WHERE connector_id = ? AND table_name = ?
             """,
-            [connector_id, table_name],
-        ).fetchone()
+                [connector_id, table_name],
+            )
+            .fetchone()
+        )
         if row is None:
             return None, None
         return row[0], row[1]

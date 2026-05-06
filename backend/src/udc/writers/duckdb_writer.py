@@ -32,7 +32,6 @@ class DuckDBWriter(BaseWriter):
         with duckdb.connect(self.db_path) as conn:
             conn.register("_write_df", df)
             conn.execute(
-                f"CREATE TABLE IF NOT EXISTS {self.table} AS "
-                f"SELECT * FROM _write_df LIMIT 0"
+                f"CREATE TABLE IF NOT EXISTS {self.table} AS SELECT * FROM _write_df LIMIT 0"
             )
             conn.execute(f"INSERT INTO {self.table} SELECT * FROM _write_df")

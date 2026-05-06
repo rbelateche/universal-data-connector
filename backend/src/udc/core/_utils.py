@@ -13,7 +13,6 @@ def validate_identifier(name: str, label: str = "identifier") -> str:
     """
     if not _IDENT_RE.fullmatch(name):
         raise ValueError(
-            f"Unsafe SQL {label} {name!r}. "
-            "Only letters, digits and underscores are allowed."
+            f"Unsafe SQL {label} {name!r}. Only letters, digits and underscores are allowed."
         )
     return name

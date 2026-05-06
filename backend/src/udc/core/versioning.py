@@ -63,9 +63,7 @@ class SchemaVersionStore:
             self._conn.execute(_INIT_SQL)
         return self._conn
 
-    def snapshot(
-        self, source_id: str, schema: dict[str, str]
-    ) -> SchemaDiff | None:
+    def snapshot(self, source_id: str, schema: dict[str, str]) -> SchemaDiff | None:
         """
         Persist a schema snapshot.
 
@@ -88,9 +86,7 @@ class SchemaVersionStore:
         ).fetchone()
 
         # Compute next id
-        row = conn.execute(
-            "SELECT COALESCE(MAX(id), 0) + 1 FROM schema_snapshots"
-        ).fetchone()
+        row = conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM schema_snapshots").fetchone()
         new_id: int = row[0] if row else 1
 
         conn.execute(
@@ -104,9 +100,7 @@ class SchemaVersionStore:
         prev_id, prev_json = prev
         diff = self._compute_diff(json.loads(prev_json), schema)
 
-        diff_id_row = conn.execute(
-            "SELECT COALESCE(MAX(id), 0) + 1 FROM schema_diffs"
-        ).fetchone()
+        diff_id_row = conn.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM schema_diffs").fetchone()
         diff_id: int = diff_id_row[0] if diff_id_row else 1
 
         conn.execute(
@@ -129,19 +123,20 @@ class SchemaVersionStore:
 
     def get_history(self, source_id: str) -> list[dict[str, Any]]:
         """Return all snapshots for *source_id*, newest first."""
-        rows = self._get_conn().execute(
-            """
+        rows = (
+            self._get_conn()
+            .execute(
+                """
             SELECT id, schema_json, captured_at
             FROM schema_snapshots
             WHERE source_id = ?
             ORDER BY captured_at DESC
             """,
-            [source_id],
-        ).fetchall()
-        return [
-            {"id": r[0], "schema": json.loads(r[1]), "captured_at": str(r[2])}
-            for r in rows
-        ]
+                [source_id],
+            )
+            .fetchall()
+        )
+        return [{"id": r[0], "schema": json.loads(r[1]), "captured_at": str(r[2])} for r in rows]
 
     @staticmethod
     def _compute_diff(old: dict[str, str], new: dict[str, str]) -> SchemaDiff:

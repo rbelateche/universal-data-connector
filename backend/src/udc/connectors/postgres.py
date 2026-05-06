@@ -74,9 +74,7 @@ class PostgresConnector(BaseConnector):
             params["watermark"] = watermark_val
 
         with engine.connect() as conn:
-            result = conn.execution_options(stream_results=True).execute(
-                text(query), params
-            )
+            result = conn.execution_options(stream_results=True).execute(text(query), params)
             while True:
                 batch = result.fetchmany(batch_size)
                 if not batch:

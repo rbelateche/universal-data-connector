@@ -119,7 +119,11 @@ class JsonApiConnector(BaseConnector):
         rows = self._fetch_all()
 
         if watermark_col is not None and watermark_val is not None:
-            rows = [r for r in rows if r.get(watermark_col) is not None and r[watermark_col] > watermark_val]
+            rows = [
+                r
+                for r in rows
+                if r.get(watermark_col) is not None and r[watermark_col] > watermark_val
+            ]
 
         for i in range(0, len(rows), batch_size):
             yield rows[i : i + batch_size]

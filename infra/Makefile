@@ -19,20 +19,20 @@ build:  ## Build all Docker images without starting
 
 # ─── Local Python (without Docker) ───────────────────────────────────────────
 install:  ## Install Python package in editable mode with dev extras
-	cd backend && uv pip install -e ".[dev]"
+	cd ../backend && uv pip install -e ".[dev]"
 
 api:  ## Run FastAPI locally (no Docker)
-	cd backend && uvicorn udc.api.app:app --reload --port 8000
+	cd ../backend && uvicorn udc.api.app:app --reload --port 8000
 
 # ─── Quality ──────────────────────────────────────────────────────────────────
 lint:  ## Run ruff linter + formatter check
-	cd backend && uv run ruff check src/ && uv run ruff format --check src/
+	cd ../backend && uv run --extra dev ruff check src/ && uv run --extra dev ruff format --check src/
 
 types:  ## Run mypy type checks
-	cd backend && uv run mypy src/udc
+	cd ../backend && uv run --extra dev mypy src/udc
 
 test:  ## Run pytest test suite
-	cd backend && uv run pytest ../tests/ -v --tb=short --cov=src/udc --cov-report=term-missing
+	cd ../backend && uv run --extra dev pytest ../tests/ -v --tb=short --cov=src/udc --cov-report=term-missing
 
 check: lint types test  ## Run all quality checks (lint + types + tests)
 

@@ -10,7 +10,7 @@ class ColumnStats:
     name: str
     inferred_type: str
     null_count: int
-    null_pct: float          # 0.0 – 1.0
+    null_pct: float  # 0.0 – 1.0
     distinct_count: int
     min_value: Any
     max_value: Any

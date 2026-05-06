@@ -2,7 +2,7 @@
 
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import duckdb
 
@@ -49,10 +49,8 @@ class CsvConnector(BaseConnector):
 
     def sample(self, n: int = 100) -> list[dict[str, Any]]:
         conn = self._assert_connected()
-        df = conn.execute(
-            f"SELECT * FROM read_csv_auto('{self._safe_path}') LIMIT {int(n)}"
-        ).df()
-        return df.to_dict(orient="records")
+        df = conn.execute(f"SELECT * FROM read_csv_auto('{self._safe_path}') LIMIT {int(n)}").df()
+        return cast("list[dict[str, Any]]", df.to_dict(orient="records"))
 
     def stream(
         self,
@@ -82,7 +80,5 @@ class CsvConnector(BaseConnector):
 
     def get_schema(self) -> dict[str, str]:
         conn = self._assert_connected()
-        rows = conn.execute(
-            f"DESCRIBE SELECT * FROM read_csv_auto('{self._safe_path}')"
-        ).fetchall()
+        rows = conn.execute(f"DESCRIBE SELECT * FROM read_csv_auto('{self._safe_path}')").fetchall()
         return {row[0]: row[1] for row in rows}
