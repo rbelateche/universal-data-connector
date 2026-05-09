@@ -138,6 +138,30 @@ class SchemaVersionStore:
         )
         return [{"id": r[0], "schema": json.loads(r[1]), "captured_at": str(r[2])} for r in rows]
 
+    def get_latest_diff(self, source_id: str) -> SchemaDiff | None:
+        """Return the most recent schema diff for *source_id*, or None if none exists."""
+        row = (
+            self._get_conn()
+            .execute(
+                """
+                SELECT added_cols, removed_cols, changed_cols
+                FROM schema_diffs
+                WHERE source_id = ?
+                ORDER BY detected_at DESC
+                LIMIT 1
+                """,
+                [source_id],
+            )
+            .fetchone()
+        )
+        if row is None:
+            return None
+        return SchemaDiff(
+            added=json.loads(row[0]),
+            removed=json.loads(row[1]),
+            changed=json.loads(row[2]),
+        )
+
     @staticmethod
     def _compute_diff(old: dict[str, str], new: dict[str, str]) -> SchemaDiff:
         old_cols = set(old)
