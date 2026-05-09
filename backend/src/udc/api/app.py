@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from udc.api.routers.mappings import router as mappings_router
 from udc.core.logging import setup_logging
 
 
@@ -36,6 +37,8 @@ def create_app() -> FastAPI:
     @application.get("/health", tags=["meta"])
     async def health() -> dict[str, str]:
         return {"status": "ok", "version": "0.1.0"}
+
+    application.include_router(mappings_router)
 
     return application
 
