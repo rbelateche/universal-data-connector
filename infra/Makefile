@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 COMPOSE = docker compose -f infra/docker-compose.yml
 
-.PHONY: help dev stop build test lint types check install demo clean
+.PHONY: help dev stop build test lint types check install install-ui ui build-ui demo clean
 
 help:  ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -23,6 +23,16 @@ install:  ## Install Python package in editable mode with dev extras
 
 api:  ## Run FastAPI locally (no Docker)
 	cd ../backend && uvicorn udc.api.app:app --reload --port 8000
+
+# ─── Frontend ─────────────────────────────────────────────────────────────────
+install-ui:  ## Install frontend npm dependencies
+	cd ../frontend && npm install
+
+ui:  ## Run Vite dev server locally (port 5173)
+	cd ../frontend && npm run dev
+
+build-ui:  ## Build frontend for production
+	cd ../frontend && npm run build
 
 # ─── Quality ──────────────────────────────────────────────────────────────────
 lint:  ## Run ruff linter + formatter check
