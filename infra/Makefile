@@ -48,9 +48,9 @@ demo-api:  ## Run the API on :8000 with the retail demo data (fresh DuckDB file 
 	  DATABASE_URL=$${DATABASE_URL:-postgresql://unused@localhost/unused} \
 	  uv run uvicorn udc.api.app:app --port 8000
 
-demo-record:  ## Re-record the demo mapping proposals with live Claude calls (needs ANTHROPIC_API_KEY)
+demo-record:  ## Re-record demo proposals with live Claude calls (needs ANTHROPIC_API_KEY; SOURCES="erp pim" to limit)
 	cd ../backend && DATABASE_URL=$${DATABASE_URL:-postgresql://unused@localhost/unused} \
-	  uv run python -m udc.demo record
+	  uv run python -m udc.demo record $(SOURCES)
 
 # ─── MCP app (mcp-app/, Skybridge) ────────────────────────────────────────────
 mcp-install:  ## Install the MCP app's dependencies

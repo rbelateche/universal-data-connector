@@ -64,10 +64,13 @@ def seed_demo(sources: SourceStore, mappings: MappingStore) -> list[str]:
     return added
 
 
-def record_demo(mapper: SchemaMapper, model: str) -> list[Path]:
-    """Run live inference for every demo source and overwrite its recorded file."""
+def record_demo(mapper: SchemaMapper, model: str, only: list[str] | None = None) -> list[Path]:
+    """Run live inference for the demo sources (all, or *only* these ids) and
+    overwrite their recorded files."""
     written: list[Path] = []
     for source in load_demo_sources():
+        if only and source.source_id not in only:
+            continue
         result = mapper.infer(
             stats=stats_for_source(source),
             target_schema=CANONICAL_SCHEMAS[source.target_schema],

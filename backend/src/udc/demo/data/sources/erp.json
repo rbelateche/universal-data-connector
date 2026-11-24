@@ -14,11 +14,11 @@
     {"name": "ERSDA", "type": "DATS(8)", "description": "Created on"}
   ],
   "sample_rows": [
-    {"MATNR": "000000010004711", "MAKTX": "Sac Lune cuir grainé noir", "MTART": "FERT", "MATKL": "BAGS", "NETPR": "2.450,00", "WAERS": "EUR", "LABST": "12.000", "ERSDA": "20260315"},
-    {"MATNR": "000000010004712", "MAKTX": "Sac Lune cuir grainé ivoire", "MTART": "FERT", "MATKL": "BAGS", "NETPR": "2.450,00", "WAERS": "EUR", "LABST": "4.000", "ERSDA": "20260315"},
-    {"MATNR": "000000010005120", "MAKTX": "Carré soie Orage 90", "MTART": "FERT", "MATKL": "ACCS", "NETPR": "490,00", "WAERS": "EUR", "LABST": "38.000", "ERSDA": "20260402"},
-    {"MATNR": "000000010005388", "MAKTX": "Mocassin Rivage veau velours", "MTART": "FERT", "MATKL": "SHOE", "NETPR": "890,00", "WAERS": "EUR", "LABST": "9.000", "ERSDA": "20260410"},
-    {"MATNR": "000000010006001", "MAKTX": "Manteau Bise laine double face", "MTART": "FERT", "MATKL": "RTW", "NETPR": "3.200,00", "WAERS": "EUR", "LABST": "3.000", "ERSDA": "20260502"},
-    {"MATNR": "000000010006950", "MAKTX": "Coffret cadeau Vellandre", "MTART": "VERP", "MATKL": "PACK", "NETPR": "0,00", "WAERS": "EUR", "LABST": "250.000", "ERSDA": "20260120"}
+    {"MATNR": "000000010004711", "MAKTX": "Sac Lune cuir grainé noir", "MTART": "FERT", "MATKL": "BAGS", "NETPR": "2.450,00", "WAERS": "EUR", "LABST": "12,000", "ERSDA": "20260315"},
+    {"MATNR": "000000010004712", "MAKTX": "Sac Lune cuir grainé ivoire", "MTART": "FERT", "MATKL": "BAGS", "NETPR": "2.450,00", "WAERS": "EUR", "LABST": "4,000", "ERSDA": "20260315"},
+    {"MATNR": "000000010005120", "MAKTX": "Carré soie Orage 90", "MTART": "FERT", "MATKL": "ACCS", "NETPR": "490,00", "WAERS": "EUR", "LABST": "38,000", "ERSDA": "20260402"},
+    {"MATNR": "000000010005388", "MAKTX": "Mocassin Rivage veau velours", "MTART": "FERT", "MATKL": "SHOE", "NETPR": "890,00", "WAERS": "EUR", "LABST": "9,000", "ERSDA": "20260410"},
+    {"MATNR": "000000010006001", "MAKTX": "Manteau Bise laine double face", "MTART": "FERT", "MATKL": "RTW", "NETPR": "3.200,00", "WAERS": "EUR", "LABST": "3,000", "ERSDA": "20260502"},
+    {"MATNR": "000000010006950", "MAKTX": "Coffret cadeau Vellandre", "MTART": "VERP", "MATKL": "PACK", "NETPR": "0,00", "WAERS": "EUR", "LABST": "250,000", "ERSDA": "20260120"}
   ]
 }

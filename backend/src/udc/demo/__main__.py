@@ -1,7 +1,7 @@
 """Demo tooling.
 
     uv run python -m udc.demo seed     # load demo sources into DUCKDB_PATH
-    uv run python -m udc.demo record   # re-record proposals with live Claude calls
+    uv run python -m udc.demo record [source_id ...]   # re-record with live Claude calls
 
 ``seed`` writes to the DuckDB file directly, so run it while the API is stopped
 (DuckDB allows one writing process). ``make demo-api`` seeds at startup instead.
@@ -35,7 +35,7 @@ def main(argv: list[str]) -> int:
             return 1
         mapper = SchemaMapper(api_key=settings.anthropic_api_key, model=settings.anthropic_model)
         try:
-            for path in record_demo(mapper, settings.anthropic_model):
+            for path in record_demo(mapper, settings.anthropic_model, argv[2:] or None):
                 print(f"Recorded {path}")
         except anthropic.APIStatusError as exc:
             print(describe_api_error(exc), file=sys.stderr)
