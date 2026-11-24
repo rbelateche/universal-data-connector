@@ -4,7 +4,7 @@ emoji: 🧩
 colorFrom: indigo
 colorTo: gray
 sdk: docker
-app_port: 7860
+app_port: 8000
 pinned: false
 short_description: Universal Data Connector API with a fictional retail demo
 ---

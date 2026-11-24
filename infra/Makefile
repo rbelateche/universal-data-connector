@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 COMPOSE = docker compose -f infra/docker-compose.yml
 
-.PHONY: help dev stop build test lint types check install demo demo-api demo-record mcp-install mcp-dev mcp-test deploy-backend deploy-mcp clean
+.PHONY: help dev stop build test lint types check install demo demo-api demo-record mcp-install mcp-dev mcp-test deploy-backend deploy-backend-hf deploy-mcp clean
 
 help:  ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -62,11 +62,16 @@ mcp-dev:  ## Run the MCP app on :3000 (MCP at /mcp, DevTools at /); needs `make 
 mcp-test:  ## Type-check and test the MCP app
 	cd ../mcp-app && npm run typecheck && npm test
 
-# ─── Cloud demo (Hugging Face Space + Alpic) ──────────────────────────────────
-deploy-backend:  ## Deploy the demo API to a Hugging Face Space (needs HF_TOKEN in backend/.env)
+# ─── Cloud demo (UDC API on Render + MCP app on Alpic) ────────────────────────
+BRANCH ?= main
+
+deploy-backend:  ## Deploy the demo API to a free Render service (needs RENDER_API_KEY in backend/.env; BRANCH=main)
+	cd ../backend && uv run --with truststore python deploy/render_service.py --branch $(BRANCH)
+
+deploy-backend-hf:  ## Alternative: deploy the demo API to a Hugging Face Docker Space (needs HF PRO + HF_TOKEN)
 	cd ../backend && uv run --with huggingface_hub --with truststore python deploy/hf_space.py
 
-deploy-mcp:  ## Deploy the MCP app to Alpic, pointed at the Space (run deploy-backend first)
+deploy-mcp:  ## Deploy the MCP app to Alpic, pointed at the deployed API (run deploy-backend first)
 	cd ../mcp-app && if [ -d .alpic ]; then NODE_USE_SYSTEM_CA=1 npx alpic deploy --non-interactive; \
 	  else NODE_USE_SYSTEM_CA=1 npx alpic deploy --non-interactive --runtime node24 \
 	    --project-name udc-mapping-review --env-file .env.deploy; fi
