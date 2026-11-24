@@ -257,8 +257,8 @@ def validate(
                     "error",
                     "UNMAPPED_REQUIRED",
                     f.path,
-                    f"Required field {f.path} has no source field. Map one by hand "
-                    "(status 'edited' with this target) or supply it outside this source.",
+                    f"Required field {f.path} has no source field here. Map a source field "
+                    "to it (edit that field's target) or take it from another source.",
                 )
             )
 
