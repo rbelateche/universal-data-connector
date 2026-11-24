@@ -11,6 +11,8 @@ Map any data source to a canonical schema with LLM-powered inference.
   [mcp-app/README.md](mcp-app/README.md).
 - **`cli/`**, **`infra/`**: CLI entry point, Docker Compose and Make targets.
 
+How the parts fit together, with diagrams and a code map: [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Quick start (demo)
 
 ```bash

@@ -54,6 +54,9 @@ flowchart LR
 Skybridge serves MCP statelessly (a fresh server per request), so nothing is kept
 in the app: every decision made in the table is written to UDC straight away.
 
+The whole repository (review rule, data model, code map, deployment) is described in
+[ARCHITECTURE.md](../ARCHITECTURE.md).
+
 ## Tools
 
 | Tool | What it does | Writes? |
