@@ -2,6 +2,8 @@
 
 from unittest.mock import MagicMock
 
+import anthropic
+
 import pytest
 
 from udc.core.sampler import ColumnStats, SchemaSampler
@@ -146,3 +148,34 @@ def test_no_tool_use_block_raises() -> None:
     mapper = SchemaMapper(api_key="test-key", client=client)
     with pytest.raises(ValueError, match="submit_mapping"):
         mapper.infer(_make_stats(), _TARGET_SCHEMA, "src", "Contact")
+
+
+# ── API error descriptions ────────────────────────────────────────────────────
+
+
+def _status_error(status: int, message: str | None) -> anthropic.APIStatusError:
+    import httpx
+
+    body = {"type": "error", "error": {"type": "x", "message": message}} if message else None
+    response = httpx.Response(status, request=httpx.Request("POST", "https://api.anthropic.com"))
+    return anthropic.APIStatusError("boom", response=response, body=body)
+
+
+def test_describe_api_error_passes_the_api_message_through() -> None:
+    from udc.mapper.mapper import describe_api_error
+
+    msg = describe_api_error(_status_error(400, "Your credit balance is too low."))
+    assert msg == (
+        "Mapping inference failed: the Claude API returned 400: "
+        "Your credit balance is too low."
+    )
+
+
+def test_describe_api_error_suggests_retry_only_when_it_helps() -> None:
+    from udc.mapper.mapper import describe_api_error
+
+    assert describe_api_error(_status_error(529, "Overloaded")).endswith("Try again in a moment.")
+    assert "Try again" not in describe_api_error(_status_error(401, "invalid x-api-key"))
+    assert describe_api_error(_status_error(500, None)).startswith(
+        "Mapping inference failed: the Claude API returned 500 (APIStatusError)."
+    )

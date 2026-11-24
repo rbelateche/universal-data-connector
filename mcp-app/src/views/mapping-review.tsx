@@ -289,8 +289,9 @@ function MappingRowView({
     );
   };
 
-  const applied = row.state === "mapped";
   const needsReview = row.state === "needs_review";
+  // The mapper proposes to leave this column out; accepting confirms that.
+  const isDrop = row.transformation === "drop";
   const inactive = row.state === "rejected" || row.state === "dropped";
   const samples = meta.sample_values?.[row.source_field] ?? [];
   const declaredType = meta.source_types?.[row.source_field];
@@ -340,7 +341,12 @@ function MappingRowView({
               </option>
             ))}
           </select>
-          {!inactive && (
+          {isDrop && !inactive && (
+            <div className="mt-1 text-[11px] italic text-muted-foreground">
+              proposed: leave unmapped
+            </div>
+          )}
+          {!inactive && !isDrop && (
             <select
               aria-label={`Transformation for ${row.source_field}`}
               className="mt-1 w-full rounded-md border border-border bg-background px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground"
@@ -379,7 +385,13 @@ function MappingRowView({
               size="sm"
               title={`Decided by a reviewer; mapper confidence was ${Math.round(row.confidence * 100)}%`}
             >
-              {row.status === "accepted" ? "✓ accepted" : row.status === "edited" ? "✎ edited" : "✕ rejected"}
+              {row.status === "accepted"
+                ? isDrop
+                  ? "✓ left out"
+                  : "✓ accepted"
+                : row.status === "edited"
+                  ? "✎ edited"
+                  : "✕ rejected"}
             </Badge>
           )}
         </td>
@@ -389,7 +401,7 @@ function MappingRowView({
               variant={needsReview ? "primary" : "secondary"}
               size="icon"
               aria-label={`Accept ${row.source_field}`}
-              title="Accept"
+              title={isDrop ? "Keep it unmapped" : "Accept"}
               disabled={isPending || row.unmapped || row.state === "dropped" || row.status === "accepted"}
               onClick={() => decide({ status: "accepted" })}
             >
@@ -400,13 +412,13 @@ function MappingRowView({
               size="icon"
               aria-label={`Reject ${row.source_field}`}
               title="Reject"
-              disabled={isPending || row.unmapped || row.state === "rejected"}
+              disabled={isPending || row.unmapped || isDrop || row.state === "rejected"}
               onClick={() => decide({ status: "rejected" })}
             >
               <X />
             </Button>
           </div>
-          {applied && row.status !== "proposed" && (
+          {row.status !== "proposed" && (
             <div className="mt-1 text-[10px] text-muted-foreground">saved</div>
           )}
         </td>

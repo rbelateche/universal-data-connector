@@ -100,3 +100,20 @@ class SchemaMapper:
             unmapped_source=raw.get("unmapped_source", []),
             unmapped_target=raw.get("unmapped_target", []),
         )
+
+
+def describe_api_error(exc: anthropic.APIStatusError) -> str:
+    """One-line explanation of a Claude API refusal, using the API's own message.
+
+    Billing, auth and validation problems won't fix themselves, so only rate
+    limits and server errors get a "try again" hint.
+    """
+    body: dict[str, Any] = exc.body if isinstance(exc.body, dict) else {}
+    error = body.get("error")
+    message = str(error.get("message") or "") if isinstance(error, dict) else ""
+    message = message.strip().rstrip(".")
+    detail = f": {message}." if message else f" ({type(exc).__name__})."
+    retryable = exc.status_code == 429 or exc.status_code >= 500
+    return f"Mapping inference failed: the Claude API returned {exc.status_code}{detail}" + (
+        " Try again in a moment." if retryable else ""
+    )

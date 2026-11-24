@@ -384,3 +384,24 @@ def test_export_rejects_unknown_format(client: TestClient) -> None:
     resp = client.get("/sources/erp/mapping/export", params={"format": "xml"})
     assert resp.status_code == 422
     assert "dbt_sql" in resp.text
+
+
+def test_accepting_a_pending_drop_keeps_the_column_out(client: TestClient) -> None:
+    result = _erp_result()
+    result.mappings[2] = FieldMapping("MTART", "category", "drop", 0.40, "Material type.")
+    body = _register_and_map(client, result)
+    mtart = next(m for m in body["mappings"] if m["source_col"] == "MTART")
+    assert mtart["state"] == "needs_review"
+
+    resp = client.patch("/sources/erp/mapping/fields/MTART", json={"status": "accepted"})
+    assert resp.status_code == 200
+    assert resp.json()["mapping"]["state"] == "dropped"
+    assert resp.json()["mapping"]["transform"] == "drop"
+
+    # giving it a target instead maps it as is
+    resp = client.patch(
+        "/sources/erp/mapping/fields/MTART",
+        json={"status": "edited", "target_col": "material"},
+    )
+    assert resp.json()["mapping"]["transform"] == "rename"
+    assert resp.json()["mapping"]["state"] == "mapped"

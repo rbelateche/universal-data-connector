@@ -54,7 +54,8 @@ def demo_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Tes
     monkeypatch.setenv("DATABASE_URL", "postgresql://unused@localhost/unused")
     monkeypatch.setenv("DUCKDB_PATH", str(tmp_path / "demo.duckdb"))
     monkeypatch.setenv("SEED_DEMO", "true")
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    # Explicitly empty: an env var beats backend/.env, which may hold a real key
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
     get_settings.cache_clear()
     _reset_singletons()
     with TestClient(create_app()) as client:  # runs the lifespan → seeds
@@ -64,28 +65,53 @@ def demo_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Tes
 
 
 def test_demo_story(demo_client: TestClient) -> None:
-    """The traps the README demo script walks through are all there."""
+    """Pins the recorded demo the README demo script walks through.
+
+    The proposals were recorded from claude-haiku-5-5 (2026-11-24). Re-recording
+    can change them; update this test and the README demo script together.
+    """
     listed = {s["source_id"]: s for s in demo_client.get("/sources").json()}
     assert set(listed) == {"erp", "pim", "ecom"}
     assert all(s["review_status"] == "needs_review" for s in listed.values())
 
-    issues = demo_client.post("/sources/erp/mapping/validate").json()["issues"]
-    codes = {(i["code"], i["field"]) for i in issues}
-    assert ("TYPE_MISMATCH", "sku") in codes  # MATNR cast_int
-    assert ("TRANSFORM_FAILED", "price.amount") in codes  # NETPR "2.450,00"
-    assert ("TRANSFORM_FAILED", "stock_quantity") in codes  # LABST "12.000"
-    assert ("PENDING_REVIEW", "category") in codes  # MATKL
-    assert ("UNMAPPED_REQUIRED", "brand") in codes
+    def pending(source_id: str) -> set[str]:
+        body = demo_client.get(f"/sources/{source_id}/mapping").json()
+        return {m["source_col"] for m in body["mappings"] if m["state"] == "needs_review"}
 
+    # ERP: one hesitant proposal (MTART, the SAP material type); the dry run is
+    # clean, and brand has no ERP source at all
+    assert pending("erp") == {"MTART"}
+    report = demo_client.post("/sources/erp/mapping/validate").json()
+    assert {(i["code"], i["field"]) for i in report["issues"]} == {
+        ("PENDING_REVIEW", "MTART"),
+        ("UNMAPPED_REQUIRED", "brand"),
+    }
+    assert report["dry_run"]["rows_ok"] == report["dry_run"]["rows_tested"]
+
+    # PIM: colours arrive as codes (NR, IV...) mapped as is; no price at all
+    pim = demo_client.get("/sources/pim/mapping").json()
+    colour = next(m for m in pim["mappings"] if m["source_col"] == "colour_code")
+    assert (colour["target_col"], colour["transform"], colour["state"]) == (
+        "color",
+        "rename",
+        "mapped",
+    )
+    assert pim["coverage"]["missing_required"] == ["category", "price.amount", "price.currency"]
+
+    # E-commerce: the mapper is unsure about four columns, including the
+    # option1/option2 pair whose meaning changes per product
+    assert pending("ecom") == {"handle", "compare_at_price", "option1", "option2"}
     ecom = demo_client.get("/sources/ecom/mapping").json()
-    pending = {m["source_col"] for m in ecom["mappings"] if m["state"] == "needs_review"}
-    assert pending == {"option1", "option2"}
     assert ecom["coverage"]["missing_required"] == ["brand", "price.currency"]
 
-    cells = {(c["source_id"], c["field"]): c["status"] for c in demo_client.get("/coverage").json()["cells"]}
-    assert cells[("pim", "brand")] == "mapped"
-    assert cells[("erp", "brand")] == "missing"
-    assert cells[("pim", "price.amount")] == "missing"
+    cells = {
+        (c["source_id"], c["field"]): c["status"]
+        for c in demo_client.get("/coverage").json()["cells"]
+    }
+    assert [s for s in ("erp", "pim", "ecom") if cells[(s, "brand")] == "mapped"] == ["pim"]
+    assert [s for s in ("erp", "pim", "ecom") if cells[(s, "price.currency")] == "mapped"] == [
+        "erp"
+    ]
 
     # Live inference is off without a key, and says so
     assert demo_client.post("/sources/erp/mapping").status_code == 503

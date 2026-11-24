@@ -18,6 +18,8 @@ def _m(transform: str = "rename", confidence: float = 0.9, status: str = "propos
         (_m(confidence=0.1, status="accepted"), "mapped"),  # a human decided
         (_m(confidence=0.99, status="rejected"), "rejected"),
         (_m(transform="drop"), "dropped"),
+        (_m(transform="drop", confidence=0.4), "needs_review"),  # "unsure where it goes"
+        (_m(transform="drop", confidence=0.4, status="accepted"), "dropped"),
     ],
 )
 def test_mapping_state(mapping: FieldMapping, state: str) -> None:
@@ -45,3 +47,27 @@ def test_nest_dotted_paths() -> None:
         "price": {"amount": 1.0, "currency": "EUR"},
         "sku": "A",
     }
+
+
+def test_pending_drop_neither_fills_nor_blocks_its_target() -> None:
+    from udc.mapper.canonical import get_fields
+    from udc.mapper.models import MappingResult
+    from udc.mapper.review import coverage, validate
+
+    result = MappingResult(
+        "ecom",
+        "Product",
+        [
+            FieldMapping("handle", "brand", "drop", 0.3, "slug, not a brand"),
+            FieldMapping("title_fr", "", "drop", 0.4, "no target"),
+        ],
+        [],
+        [],
+    )
+    fields = get_fields("Product")
+    assert "brand" in coverage(result, fields).missing_required  # not "pending"
+
+    issues = validate(result, fields, [{"handle": "lune-bag", "title_fr": "Sac"}]).issues
+    pending = [i for i in issues if i.code == "PENDING_REVIEW"]
+    assert {(i.field, i.severity) for i in pending} == {("handle", "warning"), ("title_fr", "warning")}
+    assert not [i for i in issues if i.code == "UNKNOWN_TARGET"]

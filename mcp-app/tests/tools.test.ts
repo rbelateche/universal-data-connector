@@ -105,6 +105,27 @@ describe("propose_mapping", () => {
     expect(text(result)).toContain("MTART → material (42%)");
   });
 
+  it("words a pending drop as a question, not as a target", async () => {
+    const mapping = structuredClone(captured["get-mapping-erp"].body) as {
+      mappings: Record<string, unknown>[];
+    };
+    Object.assign(mapping.mappings.find((m) => m.source_col === "MTART")!, {
+      target_col: "category",
+      transform: "drop",
+      confidence: 0.4,
+    });
+    fakeUdc(["get-source-erp", "get-schema-product"], {
+      "GET /sources/erp/mapping": { status: 200, body: mapping },
+    });
+    const result = await call(await connect(), "propose_mapping", { source_id: "erp" });
+
+    expect(text(result)).toContain("MTART: leave unmapped? (40%)");
+    const row = (result.structuredContent?.mappings as Record<string, unknown>[]).find(
+      (m) => m.source_field === "MTART",
+    );
+    expect(row).toMatchObject({ target_field: null, transformation: "drop" });
+  });
+
   it("runs the mapper for a source that was never mapped", async () => {
     const { calls } = fakeUdc(["get-source-wms", "err-mapping-not-yet", "err-infer-no-key"], {
       "POST /sources/wms/mapping": {

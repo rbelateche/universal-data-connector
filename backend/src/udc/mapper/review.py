@@ -5,7 +5,10 @@ The LLM proposes, a human decides the uncertain cases:
 - a mapping a reviewer accepted or edited is **mapped**;
 - a mapping a reviewer rejected is **rejected** (not applied);
 - an untouched proposal counts as **mapped** when its confidence is at least
-  ``REVIEW_THRESHOLD`` and **needs_review** below it.
+  ``REVIEW_THRESHOLD`` and **needs_review** below it;
+- a proposal to drop a column is **dropped** once confident or accepted. A
+  low-confidence drop also needs review: it is how the mapper says "I don't
+  know where this goes" (e.g. a column whose meaning changes per row).
 
 Everything that judges a mapping (coverage of required fields, validation,
 export) goes through ``mapping_state`` so the rule lives in one place.
@@ -28,11 +31,9 @@ def mapping_state(m: FieldMapping) -> MappingState:
     """Classify one mapping under the review policy."""
     if m.status == "rejected":
         return "rejected"
-    if m.transform == "drop":
-        return "dropped"
-    if m.status in ("accepted", "edited"):
-        return "mapped"
-    return "mapped" if m.confidence >= REVIEW_THRESHOLD else "needs_review"
+    if m.status == "proposed" and m.confidence < REVIEW_THRESHOLD:
+        return "needs_review"
+    return "dropped" if m.transform == "drop" else "mapped"
 
 
 def effective_result(result: MappingResult) -> MappingResult:
@@ -48,7 +49,8 @@ def field_statuses(result: MappingResult, fields: list[CanonicalField]) -> dict[
     proposal targets it) or missing (nothing targets it)."""
     status: dict[str, FieldStatus] = {f.path: "missing" for f in fields}
     for m in result.mappings:
-        if m.target_col not in status:
+        # A drop never fills a field, whatever target_col the mapper wrote.
+        if m.transform == "drop" or m.target_col not in status:
             continue
         state = mapping_state(m)
         if state == "mapped":
@@ -204,6 +206,17 @@ def validate(
     for m in result.mappings:
         state = mapping_state(m)
         if state in ("rejected", "dropped"):
+            continue
+        if m.transform == "drop":  # a pending drop: nothing to type-check
+            issues.append(
+                Issue(
+                    "warning",
+                    "PENDING_REVIEW",
+                    m.source_col,
+                    f"The mapper proposes not to map {m.source_col} ({m.confidence:.0%} "
+                    "confidence). Accept to leave it out, or edit it to map it.",
+                )
+            )
             continue
         target = by_path.get(m.target_col)
         if target is None:

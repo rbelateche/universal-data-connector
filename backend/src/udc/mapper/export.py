@@ -103,6 +103,8 @@ def _plan(source: Source, result: MappingResult, fields: list[CanonicalField]) -
     known = {f.path for f in fields}
     for m in result.mappings:
         state = mapping_state(m)
+        if state == "needs_review" and m.transform == "drop":
+            continue  # left out either way
         if state == "needs_review":
             pending.setdefault(m.target_col, m.source_col)
             warnings.append(
