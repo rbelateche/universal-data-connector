@@ -128,6 +128,18 @@ npm run dev:tunnel        # prints https://<name>.alpic.dev/mcp
 
 The tunnel URL is stable across restarts, and view edits hot-reload in the host.
 
+**Behind a corporate proxy** (Zscaler, Netskope…), the tunnel may fail with
+*"Cannot open tunnel: exited with code 1"*. The proxy re-signs HTTPS with a company
+certificate that the OS trusts but Node.js doesn't (`DEBUG='pipenet*' npx alpic
+tunnel --port 3000` shows `unable to get local issuer certificate`). Make Node use
+the system certificates:
+
+```bash
+NODE_USE_SYSTEM_CA=1 npm run dev:tunnel
+```
+
+The same applies to `npm run smoke` against the public URL.
+
 **Claude** (paid plan): Settings → Connectors (Customize → Connectors) →
 *Add custom connector* → name `UDC` and the `/mcp` URL → *Add*. In a new
 conversation, enable it from the `+` menu.
