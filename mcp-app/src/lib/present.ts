@@ -82,7 +82,8 @@ export function describeValidation(v: Validation): string {
 export type ErrorResult = {
   isError: true;
   content: [{ type: "text"; text: string }];
-  _meta: { "udc/error_kind": string };
+  /** Repeated in _meta because views receive _meta, not the content text. */
+  _meta: { "udc/error_kind": string; "udc/error": string };
 };
 
 /** Turn any failure into an MCP error result the agent can act on. */
@@ -91,23 +92,15 @@ export function toolError(error: unknown): ErrorResult {
     return {
       isError: true,
       content: [{ type: "text", text: error.message }],
-      _meta: { "udc/error_kind": error.kind },
+      _meta: { "udc/error_kind": error.kind, "udc/error": error.message },
     };
   }
   console.error("[udc-mcp] unexpected error in a tool handler:", error);
+  const text =
+    "Unexpected error in the UDC app. Try again; if it keeps failing, check the mcp-app server logs.";
   return {
     isError: true,
-    content: [
-      {
-        type: "text",
-        text: "Unexpected error in the UDC app. Try again; if it keeps failing, check the mcp-app server logs.",
-      },
-    ],
-    _meta: { "udc/error_kind": "unexpected" },
+    content: [{ type: "text", text }],
+    _meta: { "udc/error_kind": "unexpected", "udc/error": text },
   };
-}
-
-/** A validation error raised by the MCP app itself, before calling UDC. */
-export function invalid(message: string): UdcError {
-  return new UdcError("invalid", message);
 }

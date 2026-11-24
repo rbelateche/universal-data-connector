@@ -1,0 +1,11 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@alpic-ai/ui/theme";
+
+@source "../node_modules/@alpic-ai/ui/src";
+
+/* System fonts only: no external font host to allow in the view CSP. */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}

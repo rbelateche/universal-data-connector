@@ -13,7 +13,8 @@
     "evals": "vitest run evals",
     "evals:types": "tsc --noEmit -p tsconfig.evals.json",
     "test": "vitest run tests",
-    "typecheck": "tsc --noEmit -p tsconfig.evals.json"
+    "typecheck": "tsc --noEmit -p tsconfig.evals.json",
+    "smoke": "tsx scripts/smoke.ts"
   },
   "dependencies": {
     "@alpic-ai/ui": "^1.155.0",
