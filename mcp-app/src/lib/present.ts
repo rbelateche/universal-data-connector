@@ -58,7 +58,11 @@ export function describeMapping(sourceName: string, mapping: SourceMapping): str
   const pending = mapping.mappings.filter((m) => m.state === "needs_review");
   const pendingText = pending.length
     ? `${pending.length} proposal(s) need a decision: ${pending
-        .map((m) => `${m.source_col} → ${m.target_col} (${Math.round(m.confidence * 100)}%)`)
+        .map((m) =>
+          m.transform === "drop"
+            ? `${m.source_col}: leave unmapped? (${Math.round(m.confidence * 100)}%)`
+            : `${m.source_col} → ${m.target_col} (${Math.round(m.confidence * 100)}%)`,
+        )
         .join(", ")}`
     : "no proposal is waiting for a decision";
   return (
