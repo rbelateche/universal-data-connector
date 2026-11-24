@@ -6,7 +6,6 @@ build-backend = "hatchling.build"
 name = "udc"
 version = "0.1.0"
 description = "Universal Data Connector + LLM Schema Mapper"
-readme = "../README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "udc" }]
