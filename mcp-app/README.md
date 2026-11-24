@@ -138,7 +138,32 @@ the system certificates:
 NODE_USE_SYSTEM_CA=1 npm run dev:tunnel
 ```
 
-The same applies to `npm run smoke` against the public URL.
+The same applies to `npm run smoke` against the public URL. Some networks also
+cut the tunnel's raw connection to the tunnel server (port 3001): the CLI still says
+*Forwarding*, but the public URL answers 404. In that case, deploy instead (below).
+
+## Deploy to the cloud
+
+A public deployment needs no tunnel: the MCP app runs on Alpic and calls the UDC
+API on a free Render web service, protected by an API key.
+
+```mermaid
+flowchart LR
+    Host["Claude / ChatGPT"] -- "MCP /mcp" --> Alpic["MCP app<br/>Alpic"]
+    Alpic -- "REST + X-Api-Key" --> Render["UDC API (demo data)<br/>Render free web service"]
+```
+
+1. **Backend**: put `RENDER_API_KEY=...` (from Render, *Account Settings → API keys*)
+   in `backend/.env`, then run `make deploy-backend`. The script creates the service
+   (Docker image `backend/deploy/Dockerfile`), sets `REQUIRE_API_KEY=true` with a
+   generated key, waits until the API is live, and writes `mcp-app/.env.deploy`.
+2. **MCP app**: run `npx alpic login` once, then `make deploy-mcp`. It deploys
+   `mcp-app/` with the backend URL and key from `.env.deploy`, and prints the public
+   URL (`https://<project>.alpic.live`). Add `/mcp` to it in Claude or ChatGPT.
+
+Render's free services sleep after 15 minutes without traffic and take about a minute
+to wake, so the app uses 75-second backend timeouts. Before a demo, open the API's
+`/health` once to wake it. The data resets whenever the service restarts.
 
 **Claude** (paid plan): Settings → Connectors (Customize → Connectors) →
 *Add custom connector* → name `UDC` and the `/mcp` URL → *Add*. In a new

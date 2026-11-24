@@ -113,7 +113,12 @@ docs and not yet verified against a real host.
     timeout. The cause, `unable to get local issuer certificate` (Zscaler re-signs
     `*.alpic.dev`; `api.alpic.ai` was not intercepted, so login worked), only shows
     with `DEBUG='pipenet*'`. `NODE_USE_SYSTEM_CA=1` fixed it, and the app then
-    worked end to end through the public URL. Forward-deployed work happens on
+    worked end to end through the public URL, for a few minutes. After that, the
+    tunnel's raw TCP connections to the tunnel server (`alpic.dev:3001`) were reset
+    by the network every ~90 s and never carried traffic, while the CLI kept
+    printing *Forwarding* and the public URL answered 404. There is no end-to-end
+    check that would tell the user the tunnel is dead. Deploying to Alpic (HTTPS
+    only) worked from the same laptop. Forward-deployed work happens on
     exactly these laptops: surfacing TLS errors with a hint (`NODE_USE_SYSTEM_CA`,
     `NODE_EXTRA_CA_CERTS`) would save the debugging. Observed.
 
@@ -150,3 +155,7 @@ To fill in during tunnel testing:
   and the Claude/ChatGPT preview shells. Driven headlessly (Playwright), it caught a
   view crash before any host did.
 - The `setup` / `handler` split made dependency injection for tests straightforward.
+- `alpic deploy` from a fresh project: one command, about 2 minutes, a working
+  `https://<project>.alpic.live/mcp` with the views served from the same domain.
+  Small gap: `--env-file` only applies to new projects; later changes go through the
+  dashboard.

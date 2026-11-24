@@ -9,3 +9,6 @@ dist/
 # tool-call logs (UDC_TOOL_LOG)
 logs/
 *.jsonl
+
+# Alpic project link (account-specific)
+.alpic/
