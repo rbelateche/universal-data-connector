@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from udc.api.dependencies import get_mapping_store
 from udc.core.config import Settings, get_settings
 from udc.core.sampler import ColumnStats, SchemaSampler
 from udc.mapper.canonical import CANONICAL_SCHEMAS
@@ -52,18 +53,6 @@ class MergeRequest(BaseModel):
     strategy: str = "last_wins"
 
 
-# ── Shared DuckDB store (singleton per process) ───────────────────────────────
-
-_STORE: MappingStore | None = None
-
-
-def _get_store(settings: Settings = Depends(get_settings)) -> MappingStore:
-    global _STORE
-    if _STORE is None:
-        _STORE = MappingStore(settings.duckdb_path)
-    return _STORE
-
-
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 
@@ -71,7 +60,7 @@ def _get_store(settings: Settings = Depends(get_settings)) -> MappingStore:
 def infer_mapping(
     body: InferRequest,
     settings: Settings = Depends(get_settings),
-    store: MappingStore = Depends(_get_store),
+    store: MappingStore = Depends(get_mapping_store),
 ) -> InferResponse:
     """
     Sample the provided rows, call Claude, and persist the inferred mapping.
@@ -122,7 +111,7 @@ def infer_mapping(
 @router.get("/{mapping_id}", response_model=InferResponse)
 def get_mapping(
     mapping_id: int,
-    store: MappingStore = Depends(_get_store),
+    store: MappingStore = Depends(get_mapping_store),
 ) -> InferResponse:
     """Retrieve a saved mapping (with any overrides applied)."""
     try:
@@ -156,7 +145,7 @@ def get_mapping(
 def apply_override(
     mapping_id: int,
     body: OverrideRequest,
-    store: MappingStore = Depends(_get_store),
+    store: MappingStore = Depends(get_mapping_store),
 ) -> dict[str, str]:
     """Persist a human correction for one field in a saved mapping."""
     try:
@@ -171,7 +160,7 @@ def apply_override(
 @router.post("/apply")
 def apply_mapping(
     body: ApplyRequest,
-    store: MappingStore = Depends(_get_store),
+    store: MappingStore = Depends(get_mapping_store),
 ) -> list[dict[str, Any]]:
     """Transform raw rows using a saved mapping. Returns clean, renamed rows."""
     try:

@@ -39,10 +39,10 @@ def client(tmp_path: Path) -> TestClient:
     )
     app.dependency_overrides[get_settings] = lambda: settings
 
-    # Reset the router-level singleton store between tests
-    import udc.api.routers.mappings as m_mod
+    # Reset the process-level store singletons between tests
+    from udc.api.dependencies import _reset_singletons
 
-    m_mod._STORE = None
+    _reset_singletons()
     return TestClient(app)
 
 

@@ -7,6 +7,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from udc.api.routers.mappings import router as mappings_router
+from udc.api.routers.schemas import router as schemas_router
+from udc.api.routers.sources import coverage_router
+from udc.api.routers.sources import router as sources_router
 from udc.core.logging import setup_logging
 
 
@@ -39,6 +42,9 @@ def create_app() -> FastAPI:
         return {"status": "ok", "version": "0.1.0"}
 
     application.include_router(mappings_router)
+    application.include_router(schemas_router)
+    application.include_router(sources_router)
+    application.include_router(coverage_router)
 
     return application
 
