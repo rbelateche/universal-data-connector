@@ -1,0 +1,935 @@
+{
+  "list-sources": {
+    "method": "GET",
+    "path": "/sources",
+    "request": null,
+    "status": 200,
+    "body": [
+      {
+        "source_id": "erp",
+        "name": "SAP ERP material export",
+        "system": "SAP S/4HANA (MARA/MBEW/MARD extract)",
+        "target_schema": "Product",
+        "field_count": 8,
+        "sample_row_count": 6,
+        "mapping_id": 1,
+        "review_status": "needs_review",
+        "required_mapped": 4,
+        "required_total": 6
+      },
+      {
+        "source_id": "pim",
+        "name": "PIM product catalogue",
+        "system": "PIM (product information management)",
+        "target_schema": "Product",
+        "field_count": 8,
+        "sample_row_count": 6,
+        "mapping_id": 2,
+        "review_status": "needs_review",
+        "required_mapped": 3,
+        "required_total": 6
+      },
+      {
+        "source_id": "ecom",
+        "name": "E-commerce product export",
+        "system": "E-commerce platform (CSV product export)",
+        "target_schema": "Product",
+        "field_count": 9,
+        "sample_row_count": 6,
+        "mapping_id": 3,
+        "review_status": "needs_review",
+        "required_mapped": 4,
+        "required_total": 6
+      }
+    ]
+  },
+  "get-source-erp": {
+    "method": "GET",
+    "path": "/sources/erp",
+    "request": null,
+    "status": 200,
+    "body": {
+      "source_id": "erp",
+      "name": "SAP ERP material export",
+      "system": "SAP S/4HANA (MARA/MBEW/MARD extract)",
+      "target_schema": "Product",
+      "field_count": 8,
+      "sample_row_count": 6,
+      "mapping_id": 1,
+      "review_status": "needs_review",
+      "required_mapped": 4,
+      "required_total": 6,
+      "fields": [
+        {
+          "name": "MATNR",
+          "type": "CHAR(18)",
+          "description": "Material number"
+        },
+        {
+          "name": "MAKTX",
+          "type": "CHAR(40)",
+          "description": "Material description"
+        },
+        {
+          "name": "MTART",
+          "type": "CHAR(4)",
+          "description": "Material type"
+        },
+        {
+          "name": "MATKL",
+          "type": "CHAR(9)",
+          "description": "Material group"
+        },
+        {
+          "name": "NETPR",
+          "type": "CURR(11,2)",
+          "description": "Net price"
+        },
+        {
+          "name": "WAERS",
+          "type": "CUKY(5)",
+          "description": "Currency key"
+        },
+        {
+          "name": "LABST",
+          "type": "QUAN(13,3)",
+          "description": "Valuated unrestricted-use stock"
+        },
+        {
+          "name": "ERSDA",
+          "type": "DATS(8)",
+          "description": "Created on"
+        }
+      ],
+      "sample_rows": [
+        {
+          "MATNR": "000000010004711",
+          "MAKTX": "Sac Lune cuir grainé noir",
+          "MTART": "FERT",
+          "MATKL": "BAGS",
+          "NETPR": "2.450,00",
+          "WAERS": "EUR",
+          "LABST": "12.000",
+          "ERSDA": "20260315"
+        },
+        {
+          "MATNR": "000000010004712",
+          "MAKTX": "Sac Lune cuir grainé ivoire",
+          "MTART": "FERT",
+          "MATKL": "BAGS",
+          "NETPR": "2.450,00",
+          "WAERS": "EUR",
+          "LABST": "4.000",
+          "ERSDA": "20260315"
+        },
+        {
+          "MATNR": "000000010005120",
+          "MAKTX": "Carré soie Orage 90",
+          "MTART": "FERT",
+          "MATKL": "ACCS",
+          "NETPR": "490,00",
+          "WAERS": "EUR",
+          "LABST": "38.000",
+          "ERSDA": "20260402"
+        },
+        {
+          "MATNR": "000000010005388",
+          "MAKTX": "Mocassin Rivage veau velours",
+          "MTART": "FERT",
+          "MATKL": "SHOE",
+          "NETPR": "890,00",
+          "WAERS": "EUR",
+          "LABST": "9.000",
+          "ERSDA": "20260410"
+        },
+        {
+          "MATNR": "000000010006001",
+          "MAKTX": "Manteau Bise laine double face",
+          "MTART": "FERT",
+          "MATKL": "RTW",
+          "NETPR": "3.200,00",
+          "WAERS": "EUR",
+          "LABST": "3.000",
+          "ERSDA": "20260502"
+        },
+        {
+          "MATNR": "000000010006950",
+          "MAKTX": "Coffret cadeau Vellandre",
+          "MTART": "VERP",
+          "MATKL": "PACK",
+          "NETPR": "0,00",
+          "WAERS": "EUR",
+          "LABST": "250.000",
+          "ERSDA": "20260120"
+        }
+      ]
+    }
+  },
+  "get-mapping-erp": {
+    "method": "GET",
+    "path": "/sources/erp/mapping",
+    "request": null,
+    "status": 200,
+    "body": {
+      "source_id": "erp",
+      "mapping_id": 1,
+      "target_schema": "Product",
+      "mappings": [
+        {
+          "source_col": "MATNR",
+          "target_col": "sku",
+          "transform": "cast_int",
+          "confidence": 0.82,
+          "reasoning": "Material number is the unique article identifier and its values are numeric.",
+          "value_map": {},
+          "status": "proposed",
+          "state": "mapped"
+        },
+        {
+          "source_col": "MAKTX",
+          "target_col": "name",
+          "transform": "rename",
+          "confidence": 0.88,
+          "reasoning": "Material description is the human-readable product name, in French.",
+          "value_map": {},
+          "status": "proposed",
+          "state": "mapped"
+        },
+        {
+          "source_col": "MTART",
+          "target_col": "material",
+          "transform": "rename",
+          "confidence": 0.42,
+          "reasoning": "MTART could stand for material, but values like FERT and VERP look like codes.",
+          "value_map": {},
+          "status": "proposed",
+          "state": "needs_review"
+        },
+        {
+          "source_col": "MATKL",
+          "target_col": "category",
+          "transform": "rename",
+          "confidence": 0.58,
+          "reasoning": "Material group codes (BAGS, ACCS, SHOE) resemble categories but are internal codes.",
+          "value_map": {},
+          "status": "proposed",
+          "state": "needs_review"
+        },
+        {
+          "source_col": "NETPR",
+          "target_col": "price.amount",
+          "transform": "cast_float",
+          "confidence": 0.9,
+          "reasoning": "Net price is the selling price amount.",
+          "value_map": {},
+          "status": "proposed",
+          "state": "mapped"
+        },
+        {
+          "source_col": "WAERS",
+          "target_col": "price.currency",
+          "transform": "rename",
+          "confidence": 0.95,
+          "reasoning": "Currency key holds ISO currency codes such as EUR.",
+          "value_map": {},
+          "status": "proposed",
+          "state": "mapped"
+        },
+        {
+          "source_col": "LABST",
+          "target_col": "stock_quantity",
+          "transform": "cast_int",
+          "confidence": 0.8,
+          "reasoning": "Unrestricted stock is the quantity available to sell.",
+          "value_map": {},
+          "status": "proposed",
+          "state": "mapped"
+        },
+        {
+          "source_col": "ERSDA",
+          "target_col": "created_at",
+          "transform": "parse_date",
+          "confidence": 0.74,
+          "reasoning": "ERSDA is the SAP creation date, formatted YYYYMMDD.",
+          "value_map": {},
+          "status": "proposed",
+          "state": "mapped"
+        }
+      ],
+      "unmapped_source": [],
+      "coverage": {
+        "required_total": 6,
+        "required_mapped": 4,
+        "missing_required": [
+          "brand"
+        ],
+        "pending_required": [
+          "category"
+        ]
+      }
+    }
+  },
+  "get-schema-product": {
+    "method": "GET",
+    "path": "/schemas/Product",
+    "request": null,
+    "status": 200,
+    "body": {
+      "name": "Product",
+      "fields": [
+        {
+          "path": "sku",
+          "type": "TEXT",
+          "required": true,
+          "description": "Stock keeping unit: unique identifier of the sellable item or variant. Text, leading zeros are significant."
+        },
+        {
+          "path": "name",
+          "type": "TEXT",
+          "required": true,
+          "description": "Customer-facing product name, English preferred."
+        },
+        {
+          "path": "brand",
+          "type": "TEXT",
+          "required": true,
+          "description": "Brand or maison the product is sold under."
+        },
+        {
+          "path": "category",
+          "type": "TEXT",
+          "required": true,
+          "description": "Merchandise category, e.g. Bags, Shoes, Ready-to-wear."
+        },
+        {
+          "path": "price.amount",
+          "type": "DECIMAL",
+          "required": true,
+          "description": "Current selling price, tax included. Not a compare-at or original price."
+        },
+        {
+          "path": "price.currency",
+          "type": "TEXT",
+          "required": true,
+          "description": "ISO 4217 currency code, e.g. EUR."
+        },
+        {
+          "path": "material",
+          "type": "TEXT",
+          "required": false,
+          "description": "Main material or composition."
+        },
+        {
+          "path": "color",
+          "type": "TEXT",
+          "required": false,
+          "description": "Colour name, e.g. Black."
+        },
+        {
+          "path": "size",
+          "type": "TEXT",
+          "required": false,
+          "description": "Size label, e.g. M, 38, One size."
+        },
+        {
+          "path": "stock_quantity",
+          "type": "INTEGER",
+          "required": false,
+          "description": "Units available to sell."
+        },
+        {
+          "path": "created_at",
+          "type": "TIMESTAMP",
+          "required": false,
+          "description": "When the product record was created."
+        }
+      ]
+    }
+  },
+  "validate-erp": {
+    "method": "POST",
+    "path": "/sources/erp/mapping/validate?sample_limit=5",
+    "request": null,
+    "status": 200,
+    "body": {
+      "source_id": "erp",
+      "mapping_id": 1,
+      "ok": false,
+      "issues": [
+        {
+          "severity": "error",
+          "code": "TYPE_MISMATCH",
+          "field": "sku",
+          "message": "cast_int turns MATNR into a number, but sku is text: leading zeros and formatting would be lost. Use rename."
+        },
+        {
+          "severity": "warning",
+          "code": "PENDING_REVIEW",
+          "field": "material",
+          "message": "MTART → material was proposed at 42% confidence and needs a decision: accept, reject or edit it."
+        },
+        {
+          "severity": "error",
+          "code": "PENDING_REVIEW",
+          "field": "category",
+          "message": "MATKL → category was proposed at 58% confidence and needs a decision: accept, reject or edit it."
+        },
+        {
+          "severity": "error",
+          "code": "UNMAPPED_REQUIRED",
+          "field": "brand",
+          "message": "Required field brand has no source field. Map one by hand (status 'edited' with this target) or supply it outside this source."
+        },
+        {
+          "severity": "error",
+          "code": "TRANSFORM_FAILED",
+          "field": "price.amount",
+          "message": "NETPR → price.amount: cast_float failed on 5 of 5 sample rows (e.g. '2.450,00'). parse_decimal reads these values."
+        },
+        {
+          "severity": "error",
+          "code": "TRANSFORM_FAILED",
+          "field": "stock_quantity",
+          "message": "LABST → stock_quantity: cast_int failed on 5 of 5 sample rows (e.g. '12.000'). parse_decimal reads these values."
+        }
+      ],
+      "dry_run": {
+        "rows_tested": 5,
+        "rows_ok": 0,
+        "preview": [
+          {
+            "sku": 10004711,
+            "name": "Sac Lune cuir grainé noir",
+            "price": {
+              "amount": null,
+              "currency": "EUR"
+            },
+            "stock_quantity": null,
+            "created_at": "2026-03-15T00:00:00"
+          },
+          {
+            "sku": 10004712,
+            "name": "Sac Lune cuir grainé ivoire",
+            "price": {
+              "amount": null,
+              "currency": "EUR"
+            },
+            "stock_quantity": null,
+            "created_at": "2026-03-15T00:00:00"
+          },
+          {
+            "sku": 10005120,
+            "name": "Carré soie Orage 90",
+            "price": {
+              "amount": null,
+              "currency": "EUR"
+            },
+            "stock_quantity": null,
+            "created_at": "2026-04-02T00:00:00"
+          }
+        ]
+      }
+    }
+  },
+  "export-erp-dbt": {
+    "method": "GET",
+    "path": "/sources/erp/mapping/export?format=dbt_sql",
+    "request": null,
+    "status": 200,
+    "body": {
+      "source_id": "erp",
+      "mapping_id": 1,
+      "format": "dbt_sql",
+      "filename": "stg_erp__product.sql",
+      "content": "-- Generated by Universal Data Connector from mapping #1\n-- Source: erp (SAP ERP material export) → Product\n-- Dialect: DuckDB (dbt-duckdb). Only reviewed or high-confidence mappings are applied.\n-- Warnings:\n--   - MTART → material is pending review (42%) and was left out.\n--   - MATKL → category is pending review (58%) and was left out.\n--   - Required field brand has no source field; it is exported as NULL.\n--   - Required field category is exported as NULL until MATKL → category is reviewed.\n\nwith source as (\n    select * from {{ source('udc', 'erp') }}\n),\n\nprepared as (\n    select * from source\n)\n\nselect\n    cast(\"MATNR\" as bigint) as sku,  -- MATNR, cast_int\n    cast(\"MAKTX\" as varchar) as name,  -- MAKTX, rename\n    cast(null as varchar) as brand,  -- TODO: no source field (required)\n    cast(null as varchar) as category,  -- TODO: MATKL is pending review (required)\n    cast(cast(\"NETPR\" as double) as decimal(18, 2)) as price_amount,  -- NETPR, cast_float\n    cast(\"WAERS\" as varchar) as price_currency,  -- WAERS, rename\n    cast(null as varchar) as material,  -- TODO: MTART is pending review\n    cast(null as varchar) as color,  -- TODO: no source field\n    cast(null as varchar) as size,  -- TODO: no source field\n    cast(\"LABST\" as bigint) as stock_quantity,  -- LABST, cast_int\n    strptime(trim(\"ERSDA\"), '%Y%m%d') as created_at  -- ERSDA, parse_date\nfrom prepared\n",
+      "warnings": [
+        "MTART → material is pending review (42%) and was left out.",
+        "MATKL → category is pending review (58%) and was left out.",
+        "Required field brand has no source field; it is exported as NULL.",
+        "Required field category is exported as NULL until MATKL → category is reviewed."
+      ]
+    }
+  },
+  "coverage": {
+    "method": "GET",
+    "path": "/coverage?target_schema=Product",
+    "request": null,
+    "status": 200,
+    "body": {
+      "target_schema": "Product",
+      "fields": [
+        {
+          "path": "sku",
+          "required": true
+        },
+        {
+          "path": "name",
+          "required": true
+        },
+        {
+          "path": "brand",
+          "required": true
+        },
+        {
+          "path": "category",
+          "required": true
+        },
+        {
+          "path": "price.amount",
+          "required": true
+        },
+        {
+          "path": "price.currency",
+          "required": true
+        },
+        {
+          "path": "material",
+          "required": false
+        },
+        {
+          "path": "color",
+          "required": false
+        },
+        {
+          "path": "size",
+          "required": false
+        },
+        {
+          "path": "stock_quantity",
+          "required": false
+        },
+        {
+          "path": "created_at",
+          "required": false
+        }
+      ],
+      "sources": [
+        {
+          "source_id": "erp",
+          "name": "SAP ERP material export",
+          "mapping_id": 1
+        },
+        {
+          "source_id": "pim",
+          "name": "PIM product catalogue",
+          "mapping_id": 2
+        },
+        {
+          "source_id": "ecom",
+          "name": "E-commerce product export",
+          "mapping_id": 3
+        }
+      ],
+      "cells": [
+        {
+          "field": "sku",
+          "source_id": "erp",
+          "status": "mapped",
+          "source_col": "MATNR",
+          "confidence": 0.82
+        },
+        {
+          "field": "name",
+          "source_id": "erp",
+          "status": "mapped",
+          "source_col": "MAKTX",
+          "confidence": 0.88
+        },
+        {
+          "field": "brand",
+          "source_id": "erp",
+          "status": "missing",
+          "source_col": null,
+          "confidence": null
+        },
+        {
+          "field": "category",
+          "source_id": "erp",
+          "status": "needs_review",
+          "source_col": "MATKL",
+          "confidence": 0.58
+        },
+        {
+          "field": "price.amount",
+          "source_id": "erp",
+          "status": "mapped",
+          "source_col": "NETPR",
+          "confidence": 0.9
+        },
+        {
+          "field": "price.currency",
+          "source_id": "erp",
+          "status": "mapped",
+          "source_col": "WAERS",
+          "confidence": 0.95
+        },
+        {
+          "field": "material",
+          "source_id": "erp",
+          "status": "needs_review",
+          "source_col": "MTART",
+          "confidence": 0.42
+        },
+        {
+          "field": "color",
+          "source_id": "erp",
+          "status": "missing",
+          "source_col": null,
+          "confidence": null
+        },
+        {
+          "field": "size",
+          "source_id": "erp",
+          "status": "missing",
+          "source_col": null,
+          "confidence": null
+        },
+        {
+          "field": "stock_quantity",
+          "source_id": "erp",
+          "status": "mapped",
+          "source_col": "LABST",
+          "confidence": 0.8
+        },
+        {
+          "field": "created_at",
+          "source_id": "erp",
+          "status": "mapped",
+          "source_col": "ERSDA",
+          "confidence": 0.74
+        },
+        {
+          "field": "sku",
+          "source_id": "pim",
+          "status": "mapped",
+          "source_col": "product_ref",
+          "confidence": 0.86
+        },
+        {
+          "field": "name",
+          "source_id": "pim",
+          "status": "mapped",
+          "source_col": "title_en",
+          "confidence": 0.81
+        },
+        {
+          "field": "brand",
+          "source_id": "pim",
+          "status": "mapped",
+          "source_col": "brand_name",
+          "confidence": 0.97
+        },
+        {
+          "field": "category",
+          "source_id": "pim",
+          "status": "needs_review",
+          "source_col": "collection",
+          "confidence": 0.46
+        },
+        {
+          "field": "price.amount",
+          "source_id": "pim",
+          "status": "missing",
+          "source_col": null,
+          "confidence": null
+        },
+        {
+          "field": "price.currency",
+          "source_id": "pim",
+          "status": "missing",
+          "source_col": null,
+          "confidence": null
+        },
+        {
+          "field": "material",
+          "source_id": "pim",
+          "status": "mapped",
+          "source_col": "material_composition",
+          "confidence": 0.9
+        },
+        {
+          "field": "color",
+          "source_id": "pim",
+          "status": "needs_review",
+          "source_col": "colour_code",
+          "confidence": 0.68
+        },
+        {
+          "field": "size",
+          "source_id": "pim",
+          "status": "mapped",
+          "source_col": "size_label",
+          "confidence": 0.93
+        },
+        {
+          "field": "stock_quantity",
+          "source_id": "pim",
+          "status": "missing",
+          "source_col": null,
+          "confidence": null
+        },
+        {
+          "field": "created_at",
+          "source_id": "pim",
+          "status": "missing",
+          "source_col": null,
+          "confidence": null
+        },
+        {
+          "field": "sku",
+          "source_id": "ecom",
+          "status": "mapped",
+          "source_col": "variant_sku",
+          "confidence": 0.93
+        },
+        {
+          "field": "name",
+          "source_id": "ecom",
+          "status": "mapped",
+          "source_col": "title",
+          "confidence": 0.9
+        },
+        {
+          "field": "brand",
+          "source_id": "ecom",
+          "status": "missing",
+          "source_col": null,
+          "confidence": null
+        },
+        {
+          "field": "category",
+          "source_id": "ecom",
+          "status": "mapped",
+          "source_col": "product_type",
+          "confidence": 0.85
+        },
+        {
+          "field": "price.amount",
+          "source_id": "ecom",
+          "status": "mapped",
+          "source_col": "price",
+          "confidence": 0.88
+        },
+        {
+          "field": "price.currency",
+          "source_id": "ecom",
+          "status": "missing",
+          "source_col": null,
+          "confidence": null
+        },
+        {
+          "field": "material",
+          "source_id": "ecom",
+          "status": "missing",
+          "source_col": null,
+          "confidence": null
+        },
+        {
+          "field": "color",
+          "source_id": "ecom",
+          "status": "needs_review",
+          "source_col": "option1",
+          "confidence": 0.52
+        },
+        {
+          "field": "size",
+          "source_id": "ecom",
+          "status": "needs_review",
+          "source_col": "option2",
+          "confidence": 0.49
+        },
+        {
+          "field": "stock_quantity",
+          "source_id": "ecom",
+          "status": "mapped",
+          "source_col": "inventory_qty",
+          "confidence": 0.9
+        },
+        {
+          "field": "created_at",
+          "source_id": "ecom",
+          "status": "missing",
+          "source_col": null,
+          "confidence": null
+        }
+      ]
+    }
+  },
+  "err-unknown-source": {
+    "method": "GET",
+    "path": "/sources/sap",
+    "request": null,
+    "status": 404,
+    "body": {
+      "detail": "Unknown source_id 'sap'. Registered sources: erp, pim, ecom."
+    }
+  },
+  "err-infer-no-key": {
+    "method": "POST",
+    "path": "/sources/erp/mapping",
+    "request": null,
+    "status": 503,
+    "body": {
+      "detail": "Live mapping inference is not configured: ANTHROPIC_API_KEY is not set on the UDC backend. Existing mappings can still be read and reviewed."
+    }
+  },
+  "err-edit-unknown-target": {
+    "method": "PATCH",
+    "path": "/sources/erp/mapping/fields/MTART",
+    "request": {
+      "status": "edited",
+      "target_col": "material_type"
+    },
+    "status": 422,
+    "body": {
+      "detail": "'material_type' is not a Product field. Valid fields: sku, name, brand, category, price.amount, price.currency, material, color, size, stock_quantity, created_at."
+    }
+  },
+  "err-register-invalid": {
+    "method": "POST",
+    "path": "/sources",
+    "request": {
+      "source_id": "wms",
+      "name": "WMS"
+    },
+    "status": 422,
+    "body": {
+      "detail": [
+        {
+          "type": "value_error",
+          "loc": [
+            "body"
+          ],
+          "msg": "Value error, Provide the source's fields, some sample rows, or both.",
+          "input": {
+            "source_id": "wms",
+            "name": "WMS"
+          },
+          "ctx": {
+            "error": {}
+          }
+        }
+      ]
+    }
+  },
+  "err-register-duplicate": {
+    "method": "POST",
+    "path": "/sources",
+    "request": {
+      "source_id": "erp",
+      "name": "dup",
+      "sample_rows": [
+        {
+          "a": 1
+        }
+      ]
+    },
+    "status": 409,
+    "body": {
+      "detail": "Source 'erp' already exists. Pick another source_id."
+    }
+  },
+  "register-wms": {
+    "method": "POST",
+    "path": "/sources",
+    "request": {
+      "source_id": "wms",
+      "name": "Warehouse stock export",
+      "system": "WMS",
+      "sample_rows": [
+        {
+          "item": "VLD-BAG-LUNE-NR",
+          "qty": 12
+        }
+      ]
+    },
+    "status": 201,
+    "body": {
+      "source_id": "wms",
+      "name": "Warehouse stock export",
+      "system": "WMS",
+      "target_schema": "Product",
+      "field_count": 2,
+      "sample_row_count": 1,
+      "mapping_id": null,
+      "review_status": "not_mapped",
+      "required_mapped": 0,
+      "required_total": 6
+    }
+  },
+  "err-mapping-not-yet": {
+    "method": "GET",
+    "path": "/sources/wms/mapping",
+    "request": null,
+    "status": 404,
+    "body": {
+      "detail": "Source 'wms' has no mapping yet. Run inference first (POST /sources/wms/mapping)."
+    }
+  },
+  "decide-erp-matkl": {
+    "method": "PATCH",
+    "path": "/sources/erp/mapping/fields/MATKL",
+    "request": {
+      "status": "accepted"
+    },
+    "status": 200,
+    "body": {
+      "source_id": "erp",
+      "mapping_id": 1,
+      "mapping": {
+        "source_col": "MATKL",
+        "target_col": "category",
+        "transform": "rename",
+        "confidence": 0.58,
+        "reasoning": "Material group codes (BAGS, ACCS, SHOE) resemble categories but are internal codes.",
+        "value_map": {},
+        "status": "accepted",
+        "state": "mapped"
+      },
+      "coverage": {
+        "required_total": 6,
+        "required_mapped": 5,
+        "missing_required": [
+          "brand"
+        ],
+        "pending_required": []
+      }
+    }
+  },
+  "get-source-wms": {
+    "method": "GET",
+    "path": "/sources/wms",
+    "request": null,
+    "status": 200,
+    "body": {
+      "source_id": "wms",
+      "name": "Warehouse stock export",
+      "system": "WMS",
+      "target_schema": "Product",
+      "field_count": 2,
+      "sample_row_count": 1,
+      "mapping_id": null,
+      "review_status": "not_mapped",
+      "required_mapped": 0,
+      "required_total": 6,
+      "fields": [
+        {
+          "name": "item",
+          "type": "unknown",
+          "description": ""
+        },
+        {
+          "name": "qty",
+          "type": "unknown",
+          "description": ""
+        }
+      ],
+      "sample_rows": [
+        {
+          "item": "VLD-BAG-LUNE-NR",
+          "qty": 12
+        }
+      ]
+    }
+  }
+}
