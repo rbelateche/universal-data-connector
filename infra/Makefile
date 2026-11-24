@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 COMPOSE = docker compose -f infra/docker-compose.yml
 
-.PHONY: help dev stop build test lint types check install demo demo-api demo-record clean
+.PHONY: help dev stop build test lint types check install demo demo-api demo-record mcp-install mcp-dev mcp-test clean
 
 help:  ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -51,6 +51,16 @@ demo-api:  ## Run the API on :8000 with the retail demo data (fresh DuckDB file 
 demo-record:  ## Re-record the demo mapping proposals with live Claude calls (needs ANTHROPIC_API_KEY)
 	cd ../backend && DATABASE_URL=$${DATABASE_URL:-postgresql://unused@localhost/unused} \
 	  uv run python -m udc.demo record
+
+# ─── MCP app (mcp-app/, Skybridge) ────────────────────────────────────────────
+mcp-install:  ## Install the MCP app's dependencies
+	cd ../mcp-app && npm install
+
+mcp-dev:  ## Run the MCP app on :3000 (MCP at /mcp, DevTools at /); needs `make demo-api`
+	cd ../mcp-app && npm run dev
+
+mcp-test:  ## Type-check and test the MCP app
+	cd ../mcp-app && npm run typecheck && npm test
 
 # ─── Housekeeping ─────────────────────────────────────────────────────────────
 clean:  ## Remove __pycache__, .mypy_cache, .ruff_cache, .pytest_cache
