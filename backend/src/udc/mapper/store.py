@@ -1,10 +1,12 @@
 """MappingStore — persists mapping results and human overrides in DuckDB."""
 
 import json
+import threading
 from typing import Any
 
 import duckdb
 
+from udc.core.locking import serialized
 from udc.mapper.models import FieldMapping, MappingResult
 
 _INIT_SQL = """
@@ -85,6 +87,7 @@ class MappingStore:
     def __init__(self, db_path: str) -> None:
         self._db_path = db_path
         self._conn: duckdb.DuckDBPyConnection | None = None
+        self._lock = threading.RLock()
 
     def _get_conn(self) -> duckdb.DuckDBPyConnection:
         if self._conn is None:
@@ -92,6 +95,7 @@ class MappingStore:
             self._conn.execute(_INIT_SQL)
         return self._conn
 
+    @serialized
     def close(self) -> None:
         if self._conn is not None:
             self._conn.close()
@@ -99,6 +103,7 @@ class MappingStore:
 
     # ── save / load ───────────────────────────────────────────────────────
 
+    @serialized
     def save(self, result: MappingResult) -> int:
         """Persist a MappingResult. Returns the new mapping_id."""
         conn = self._get_conn()
@@ -118,6 +123,7 @@ class MappingStore:
         )
         return new_id
 
+    @serialized
     def load(self, mapping_id: int) -> MappingResult:
         """Load and reconstruct a MappingResult, applying any stored overrides."""
         conn = self._get_conn()
@@ -164,6 +170,7 @@ class MappingStore:
 
         return result_from_dict(data)
 
+    @serialized
     def latest_for_source(self, source_id: str) -> int | None:
         """Return the id of the most recent mapping saved for *source_id*, if any."""
         row = (
@@ -176,6 +183,7 @@ class MappingStore:
         )
         return int(row[0]) if row and row[0] is not None else None
 
+    @serialized
     def list_for_source(self, source_id: str) -> list[dict[str, Any]]:
         """Return summary rows for all mappings saved for a given source."""
         conn = self._get_conn()
@@ -200,6 +208,7 @@ class MappingStore:
 
     # ── overrides (2.7) ───────────────────────────────────────────────────
 
+    @serialized
     def apply_override(
         self,
         mapping_id: int,

@@ -6,10 +6,13 @@ connector, which holds connection settings to pull data itself.
 """
 
 import json
+import threading
 from dataclasses import dataclass, field
 from typing import Any
 
 import duckdb
+
+from udc.core.locking import serialized
 
 _INIT_SQL = """
 CREATE TABLE IF NOT EXISTS sources (
@@ -67,6 +70,7 @@ class SourceStore:
     def __init__(self, db_path: str) -> None:
         self._db_path = db_path
         self._conn: duckdb.DuckDBPyConnection | None = None
+        self._lock = threading.RLock()
 
     def _get_conn(self) -> duckdb.DuckDBPyConnection:
         if self._conn is None:
@@ -74,11 +78,13 @@ class SourceStore:
             self._conn.execute(_INIT_SQL)
         return self._conn
 
+    @serialized
     def close(self) -> None:
         if self._conn is not None:
             self._conn.close()
             self._conn = None
 
+    @serialized
     def exists(self, source_id: str) -> bool:
         row = (
             self._get_conn()
@@ -87,6 +93,7 @@ class SourceStore:
         )
         return row is not None
 
+    @serialized
     def register(self, source: Source) -> Source:
         """Persist a new source. Raises ValueError if the id is taken."""
         if self.exists(source.source_id):
@@ -108,6 +115,7 @@ class SourceStore:
         )
         return source
 
+    @serialized
     def get(self, source_id: str) -> Source:
         """Return the source. Raises KeyError if it is not registered."""
         row = (
@@ -125,6 +133,7 @@ class SourceStore:
             raise KeyError(f"Source {source_id!r} not found.")
         return self._to_source(row)
 
+    @serialized
     def list_all(self) -> list[Source]:
         """All sources, oldest first."""
         rows = (
