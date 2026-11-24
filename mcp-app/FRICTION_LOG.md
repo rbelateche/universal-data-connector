@@ -102,9 +102,20 @@ docs and not yet verified against a real host.
     scaffolded build warns that a chunk exceeds 500 kB (React + `@alpic-ai/ui`)
     before any app code is added. Minor; observed.
 
-17. **The tunnel needs an Alpic account, and the docs don't say so.** `alpic whoami`
-    reports "Not logged in. Run `alpic login` or set ALPIC_API_KEY"; `test/tunnel.mdx`
-    doesn't mention logging in. Whether `--tunnel` works anonymously was not tested.
+17. **The tunnel needs an Alpic account, and the docs don't say so.** The tunnel
+    fetches a ticket from the Alpic API, so `alpic login` (or `ALPIC_API_KEY`) is
+    required; `test/tunnel.mdx` doesn't mention it. Observed.
+
+18. **The tunnel fails behind TLS-inspecting proxies, and the error hides why
+    (high for enterprise users).** On a corporate network running Zscaler,
+    `skybridge dev --tunnel` printed only "Cannot open tunnel: exited with code 1";
+    `alpic tunnel` printed "Failed to connect to tunnel server" after its 10 s
+    timeout. The cause, `unable to get local issuer certificate` (Zscaler re-signs
+    `*.alpic.dev`; `api.alpic.ai` was not intercepted, so login worked), only shows
+    with `DEBUG='pipenet*'`. `NODE_USE_SYSTEM_CA=1` fixed it, and the app then
+    worked end to end through the public URL. Forward-deployed work happens on
+    exactly these laptops: surfacing TLS errors with a hint (`NODE_USE_SYSTEM_CA`,
+    `NODE_EXTRA_CA_CERTS`) would save the debugging. Observed.
 
 ## Claude vs ChatGPT
 
