@@ -364,3 +364,23 @@ def test_coverage_matrix(client: TestClient) -> None:
     assert cells[("erp", "brand")]["status"] == "missing"
     assert cells[("pim", "sku")]["status"] == "missing"  # not mapped yet
     assert len(body["cells"]) == 2 * 11
+
+
+# ── export ────────────────────────────────────────────────────────────────────
+
+
+def test_export_dbt_sql(client: TestClient) -> None:
+    _register_and_map(client)
+    resp = client.get("/sources/erp/mapping/export", params={"format": "dbt_sql"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["filename"] == "stg_erp__product.sql"
+    assert "{{ source('udc', 'erp') }}" in body["content"]
+    assert any("Required field brand" in w for w in body["warnings"])
+
+
+def test_export_rejects_unknown_format(client: TestClient) -> None:
+    _register_and_map(client)
+    resp = client.get("/sources/erp/mapping/export", params={"format": "xml"})
+    assert resp.status_code == 422
+    assert "dbt_sql" in resp.text

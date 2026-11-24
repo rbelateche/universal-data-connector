@@ -16,6 +16,7 @@ from udc.api.dependencies import get_mapping_store, get_source_store
 from udc.core.config import Settings, get_settings
 from udc.core.source_store import Source, SourceField, SourceStore
 from udc.mapper.canonical import CANONICAL_FIELDS, get_fields
+from udc.mapper.export import export_mapping
 from udc.mapper.mapper import SchemaMapper
 from udc.mapper.models import FieldMapping, MappingResult
 from udc.mapper.review import coverage, field_statuses, mapping_state, validate
@@ -151,6 +152,15 @@ class ValidationResponse(BaseModel):
     ok: bool
     issues: list[IssueModel]
     dry_run: DryRunModel
+
+
+class ExportResponse(BaseModel):
+    source_id: str
+    mapping_id: int
+    format: str
+    filename: str
+    content: str
+    warnings: list[str]
 
 
 class CoverageCell(BaseModel):
@@ -426,6 +436,27 @@ def validate_source_mapping(
             rows_ok=report.rows_ok,
             preview=report.preview,
         ),
+    )
+
+
+@router.get("/{source_id}/mapping/export", response_model=ExportResponse)
+def export_source_mapping(
+    source_id: str,
+    format: Literal["json", "dbt_sql", "pyspark"] = Query(default="json"),
+    sources: SourceStore = Depends(get_source_store),
+    store: MappingStore = Depends(get_mapping_store),
+) -> ExportResponse:
+    """Render the applied mappings as a JSON spec, a dbt model or a PySpark function."""
+    source = _load_source(sources, source_id)
+    mapping_id, result = _latest(store, source)
+    exported = export_mapping(source, mapping_id, result, get_fields(source.target_schema), format)
+    return ExportResponse(
+        source_id=source.source_id,
+        mapping_id=mapping_id,
+        format=exported.format,
+        filename=exported.filename,
+        content=exported.content,
+        warnings=exported.warnings,
     )
 
 
