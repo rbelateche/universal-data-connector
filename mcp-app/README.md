@@ -230,4 +230,7 @@ one line per call:
   state only at mount, and Claude can evict view state), so the server
   instructions tell the agent to re-read the mapping before summarising or
   exporting.
+- **A table doesn't refresh itself**: it shows decisions made in it. A decision
+  the agent applies through chat appears the next time the table is shown
+  (`propose_mapping` again).
 - **No auth**: fine for a local demo and tunnel, not for production.
