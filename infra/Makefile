@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 COMPOSE = docker compose -f infra/docker-compose.yml
 
-.PHONY: help dev stop build test lint types check install demo demo-api demo-record mcp-install mcp-dev mcp-test clean
+.PHONY: help dev stop build test lint types check install demo demo-api demo-record mcp-install mcp-dev mcp-test deploy-backend deploy-mcp clean
 
 help:  ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -61,6 +61,15 @@ mcp-dev:  ## Run the MCP app on :3000 (MCP at /mcp, DevTools at /); needs `make 
 
 mcp-test:  ## Type-check and test the MCP app
 	cd ../mcp-app && npm run typecheck && npm test
+
+# ─── Cloud demo (Hugging Face Space + Alpic) ──────────────────────────────────
+deploy-backend:  ## Deploy the demo API to a Hugging Face Space (needs HF_TOKEN in backend/.env)
+	cd ../backend && uv run --with huggingface_hub --with truststore python deploy/hf_space.py
+
+deploy-mcp:  ## Deploy the MCP app to Alpic, pointed at the Space (run deploy-backend first)
+	cd ../mcp-app && if [ -d .alpic ]; then NODE_USE_SYSTEM_CA=1 npx alpic deploy --non-interactive; \
+	  else NODE_USE_SYSTEM_CA=1 npx alpic deploy --non-interactive --runtime node24 \
+	    --project-name udc-mapping-review --env-file .env.deploy; fi
 
 # ─── Housekeeping ─────────────────────────────────────────────────────────────
 clean:  ## Remove __pycache__, .mypy_cache, .ruff_cache, .pytest_cache
