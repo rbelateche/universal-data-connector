@@ -1,0 +1,25 @@
+{
+  "source_id": "ecom",
+  "name": "E-commerce product export",
+  "system": "E-commerce platform (CSV product export)",
+  "target_schema": "Product",
+  "fields": [
+    {"name": "handle", "type": "string", "description": "URL handle"},
+    {"name": "variant_sku", "type": "string", "description": "Variant SKU"},
+    {"name": "title", "type": "string", "description": "Title"},
+    {"name": "product_type", "type": "string", "description": "Product type"},
+    {"name": "price", "type": "string", "description": "Variant price"},
+    {"name": "compare_at_price", "type": "string", "description": "Variant compare-at price"},
+    {"name": "option1", "type": "string", "description": "Option 1 value"},
+    {"name": "option2", "type": "string", "description": "Option 2 value"},
+    {"name": "inventory_qty", "type": "integer", "description": "Variant inventory quantity"}
+  ],
+  "sample_rows": [
+    {"handle": "lune-bag", "variant_sku": "VLD-BAG-LUNE-NR", "title": "Lune Bag", "product_type": "Bags", "price": "2450.00", "compare_at_price": null, "option1": "Black", "option2": "One Size", "inventory_qty": 12},
+    {"handle": "lune-bag", "variant_sku": "VLD-BAG-LUNE-IV", "title": "Lune Bag", "product_type": "Bags", "price": "2450.00", "compare_at_price": null, "option1": "Ivory", "option2": "One Size", "inventory_qty": 4},
+    {"handle": "orage-silk-square", "variant_sku": "VLD-ACC-ORAGE-90", "title": "Orage Silk Square", "product_type": "Accessories", "price": "490.00", "compare_at_price": null, "option1": "Navy", "option2": "90x90", "inventory_qty": 38},
+    {"handle": "rivage-loafer", "variant_sku": "VLD-SHO-RIVAGE-40", "title": "Rivage Loafer", "product_type": "Shoes", "price": "790.00", "compare_at_price": "890.00", "option1": "40", "option2": "Brown", "inventory_qty": 9},
+    {"handle": "bise-coat", "variant_sku": "VLD-RTW-BISE-38", "title": "Bise Coat", "product_type": "Ready-to-wear", "price": "3200.00", "compare_at_price": null, "option1": "38", "option2": "Camel", "inventory_qty": 2},
+    {"handle": "bise-coat", "variant_sku": "VLD-RTW-BISE-40", "title": "Bise Coat", "product_type": "Ready-to-wear", "price": "3200.00", "compare_at_price": null, "option1": "40", "option2": "Camel", "inventory_qty": 1}
+  ]
+}

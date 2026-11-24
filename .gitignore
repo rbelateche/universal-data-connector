@@ -45,3 +45,7 @@ frontend/.vite/
 
 # ─── Docker ───────────────────────────────────────────────────────────────────
 docker-compose.override.yml
+
+# ─── Agent skills (installed via `npx skills`, pinned in skills-lock.json) ───
+.claude/skills/
+.claude/settings.local.json

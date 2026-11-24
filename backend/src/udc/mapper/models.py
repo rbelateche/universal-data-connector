@@ -2,6 +2,16 @@
 
 from dataclasses import dataclass, field
 
+# Mappings proposed below this confidence need a human decision.
+REVIEW_THRESHOLD = 0.7
+
+# Review lifecycle of one field mapping:
+#   proposed  — as inferred by the LLM, untouched by a human
+#   accepted  — a human confirmed the proposal
+#   rejected  — a human discarded it (the source column is not mapped)
+#   edited    — a human changed the target and/or transform
+MAPPING_STATUSES: tuple[str, ...] = ("proposed", "accepted", "rejected", "edited")
+
 
 @dataclass
 class FieldMapping:
@@ -9,12 +19,13 @@ class FieldMapping:
 
     source_col: str
     target_col: str
-    # One of: rename | cast_int | cast_float | cast_bool | parse_date | map_values | drop
+    # One of the transforms in udc.mapper.prompt.ALLOWED_TRANSFORMS
     transform: str
-    confidence: float  # 0.0 – 1.0; below 0.7 flagged for human review
+    confidence: float  # 0.0 – 1.0; below REVIEW_THRESHOLD flagged for human review
     reasoning: str  # Claude's explanation, persisted for audit trail
     # For map_values: {"Y": True, "N": False}
     value_map: dict[str, object] = field(default_factory=dict)
+    status: str = "proposed"  # one of MAPPING_STATUSES
 
 
 @dataclass
@@ -29,8 +40,8 @@ class MappingResult:
 
     @property
     def low_confidence(self) -> list[FieldMapping]:
-        """Fields with confidence < 0.7 — flagged for human review."""
-        return [m for m in self.mappings if m.confidence < 0.7]
+        """Fields with confidence below REVIEW_THRESHOLD — flagged for human review."""
+        return [m for m in self.mappings if m.confidence < REVIEW_THRESHOLD]
 
     @property
     def needs_review(self) -> bool:

@@ -4,6 +4,7 @@ Claude specifies *what* to do; this module *executes* it safely.
 Claude never runs code — it only picks from the ALLOWED_TRANSFORMS whitelist.
 """
 
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
@@ -12,6 +13,45 @@ from udc.mapper.models import FieldMapping, MappingResult
 
 class TransformError(Exception):
     """Raised when a value cannot be coerced with the requested transform."""
+
+
+@dataclass
+class FieldError:
+    """One value that failed its transform during a dry run."""
+
+    row_index: int
+    source_col: str
+    target_col: str
+    value: Any
+    message: str
+
+
+def _parse_decimal(value: Any, col: str) -> float:
+    """Parse a locale-formatted number.
+
+    The last ``,`` or ``.`` is the decimal separator and the other one groups
+    thousands: ``1.250,00`` and ``1,250.00`` both give 1250.0. A lone comma is a
+    decimal comma (``12,5`` → 12.5). Spaces and apostrophes used as thousands
+    separators are ignored.
+    """
+    if isinstance(value, bool):
+        raise TransformError(f"Cannot parse {value!r} as a decimal for column {col!r}")
+    if isinstance(value, int | float):
+        return float(value)
+    s = str(value).strip()
+    for sep in (" ", " ", " ", "'"):
+        s = s.replace(sep, "")
+    if "," in s and "." in s:
+        if s.rfind(",") > s.rfind("."):
+            s = s.replace(".", "").replace(",", ".")
+        else:
+            s = s.replace(",", "")
+    elif "," in s:
+        s = s.replace(",", ".")
+    try:
+        return float(s)
+    except ValueError as exc:
+        raise TransformError(f"Cannot parse {value!r} as a decimal for column {col!r}") from exc
 
 
 def _cast_int(value: Any, col: str) -> int:
@@ -81,6 +121,8 @@ def _apply_single(
         return _cast_int(value, col)
     if t == "cast_float":
         return _cast_float(value, col)
+    if t == "parse_decimal":
+        return _parse_decimal(value, col)
     if t == "cast_bool":
         return _cast_bool(value, col)
     if t == "parse_date":
@@ -110,12 +152,42 @@ class RowTransformer:
     """
 
     def __init__(self, result: MappingResult) -> None:
-        # Pre-index mappings by source_col for O(1) lookup per row
-        self._active = {m.source_col: m for m in result.mappings if m.transform != "drop"}
+        # Pre-index mappings by source_col for O(1) lookup per row.
+        # Dropped columns and mappings a reviewer rejected are not applied.
+        self._active = {
+            m.source_col: m
+            for m in result.mappings
+            if m.transform != "drop" and m.status != "rejected"
+        }
 
     def transform(self, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Return a new list of rows with all transforms applied."""
         return [self._transform_row(row) for row in rows]
+
+    def transform_with_errors(
+        self, rows: list[dict[str, Any]]
+    ) -> tuple[list[dict[str, Any]], list[FieldError]]:
+        """Dry run: like ``transform`` but never raises.
+
+        A value that fails its transform becomes ``None`` in the output row and
+        is reported as a ``FieldError``, so one bad value doesn't hide the rest.
+        """
+        out_rows: list[dict[str, Any]] = []
+        errors: list[FieldError] = []
+        for i, row in enumerate(rows):
+            out: dict[str, Any] = {}
+            for src_col, mapping in self._active.items():
+                raw = row.get(src_col)
+                if raw is None:
+                    out[mapping.target_col] = None
+                    continue
+                try:
+                    out[mapping.target_col] = _apply_single(mapping, raw)
+                except TransformError as exc:
+                    out[mapping.target_col] = None
+                    errors.append(FieldError(i, src_col, mapping.target_col, raw, str(exc)))
+            out_rows.append(out)
+        return out_rows, errors
 
     def _transform_row(self, row: dict[str, Any]) -> dict[str, Any]:
         out: dict[str, Any] = {}

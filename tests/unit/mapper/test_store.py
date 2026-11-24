@@ -113,3 +113,57 @@ def test_needs_review_on_loaded(tmp_path: Path) -> None:
     # unmapped_target=["email"] → needs_review is True
     assert loaded.needs_review is True
     store.close()
+
+
+# ── Review statuses ───────────────────────────────────────────────────────────
+
+
+def test_status_defaults_to_proposed_and_round_trips(tmp_path: Path) -> None:
+    store = MappingStore(str(tmp_path / "test.duckdb"))
+    result = _sample_result()
+    result.mappings[0].status = "accepted"
+    mid = store.save(result)
+
+    loaded = store.load(mid)
+
+    assert [m.status for m in loaded.mappings] == ["accepted", "proposed"]
+
+
+def test_latest_override_wins(tmp_path: Path) -> None:
+    store = MappingStore(str(tmp_path / "test.duckdb"))
+    mid = store.save(_sample_result())
+
+    store.apply_override(mid, "cust_id", {"status": "accepted"})
+    store.apply_override(mid, "cust_id", {"status": "rejected"})
+
+    loaded = store.load(mid)
+    assert loaded.mappings[0].status == "rejected"
+
+
+def test_override_on_unmapped_column_adds_a_mapping(tmp_path: Path) -> None:
+    store = MappingStore(str(tmp_path / "test.duckdb"))
+    result = _sample_result()
+    result.unmapped_source = ["mail_addr"]
+    mid = store.save(result)
+
+    store.apply_override(
+        mid, "mail_addr", {"status": "edited", "target_col": "email", "transform": "rename"}
+    )
+
+    loaded = store.load(mid)
+    added = [m for m in loaded.mappings if m.source_col == "mail_addr"]
+    assert len(added) == 1
+    assert added[0].target_col == "email"
+    assert added[0].status == "edited"
+    assert loaded.unmapped_source == []
+
+
+def test_latest_for_source(tmp_path: Path) -> None:
+    store = MappingStore(str(tmp_path / "test.duckdb"))
+    assert store.latest_for_source("pg-crm") is None
+
+    first = store.save(_sample_result())
+    second = store.save(_sample_result())
+    store.save(_sample_result(source_id="other"))
+
+    assert store.latest_for_source("pg-crm") == second != first

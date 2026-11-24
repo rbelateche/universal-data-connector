@@ -1,0 +1,24 @@
+{
+  "source_id": "pim",
+  "name": "PIM product catalogue",
+  "system": "PIM (product information management)",
+  "target_schema": "Product",
+  "fields": [
+    {"name": "product_ref", "type": "string", "description": "Product reference"},
+    {"name": "title_fr", "type": "string", "description": "Title (French)"},
+    {"name": "title_en", "type": "string", "description": "Title (English)"},
+    {"name": "brand_name", "type": "string", "description": "Brand"},
+    {"name": "collection", "type": "string", "description": "Collection"},
+    {"name": "material_composition", "type": "string", "description": "Material composition"},
+    {"name": "colour_code", "type": "string", "description": "Colour code"},
+    {"name": "size_label", "type": "string", "description": "Size label"}
+  ],
+  "sample_rows": [
+    {"product_ref": "VLD-BAG-LUNE-NR", "title_fr": "Sac Lune", "title_en": "Lune bag", "brand_name": "Maison Vellandre", "collection": "FW26", "material_composition": "100% cuir de veau", "colour_code": "NR", "size_label": "TU"},
+    {"product_ref": "VLD-BAG-LUNE-IV", "title_fr": "Sac Lune", "title_en": "Lune bag", "brand_name": "Maison Vellandre", "collection": "FW26", "material_composition": "100% cuir de veau", "colour_code": "IV", "size_label": "TU"},
+    {"product_ref": "VLD-ACC-ORAGE-90", "title_fr": "Carré Orage", "title_en": "Orage silk square", "brand_name": "Maison Vellandre", "collection": "SS26", "material_composition": "100% soie", "colour_code": "BL", "size_label": "90x90"},
+    {"product_ref": "VLD-SHO-RIVAGE-40", "title_fr": "Mocassin Rivage", "title_en": "Rivage loafer", "brand_name": "Maison Vellandre", "collection": "SS26", "material_composition": "Veau velours, semelle cuir", "colour_code": "MR", "size_label": "40"},
+    {"product_ref": "VLD-RTW-BISE-38", "title_fr": "Manteau Bise", "title_en": "Bise coat", "brand_name": "Maison Vellandre", "collection": "FW26", "material_composition": "90% laine, 10% cachemire", "colour_code": "CA", "size_label": "38"},
+    {"product_ref": "VLD-RTW-BISE-40", "title_fr": "Manteau Bise", "title_en": "Bise coat", "brand_name": "Maison Vellandre", "collection": "FW26", "material_composition": "90% laine, 10% cachemire", "colour_code": "CA", "size_label": "40"}
+  ]
+}

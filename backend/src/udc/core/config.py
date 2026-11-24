@@ -11,9 +11,12 @@ class Settings(BaseSettings):
     )
 
     # LLM
-    anthropic_api_key: str = Field(description="Anthropic API key for Claude")
+    anthropic_api_key: str = Field(
+        default="",
+        description="Anthropic API key for Claude. Only needed to run live mapping inference.",
+    )
     anthropic_model: str = Field(
-        default="claude-3-5-sonnet-20241022",
+        default="claude-haiku-5-5",
         description="Claude model to use for schema mapping",
     )
 
@@ -27,6 +30,12 @@ class Settings(BaseSettings):
     api_key: str = Field(
         default="dev-secret",
         description="Static API key for the FastAPI backend (override in production)",
+    )
+
+    # Demo
+    seed_demo: bool = Field(
+        default=False,
+        description="Load the retail demo sources and recorded mappings at startup",
     )
 
     # Logging

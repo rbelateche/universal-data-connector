@@ -10,6 +10,7 @@ ALLOWED_TRANSFORMS = [
     "rename",  # just rename, same type
     "cast_int",  # coerce value to int
     "cast_float",  # coerce value to float
+    "parse_decimal",  # locale-formatted number to float: "1.250,00" / "1,250.00"
     "cast_bool",  # coerce value to bool
     "parse_date",  # parse ISO / common date strings to datetime
     "map_values",  # replace specific string values (e.g. "Y"→True)

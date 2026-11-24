@@ -1,10 +1,12 @@
 """MappingStore — persists mapping results and human overrides in DuckDB."""
 
 import json
+import threading
 from typing import Any
 
 import duckdb
 
+from udc.core.locking import serialized
 from udc.mapper.models import FieldMapping, MappingResult
 
 _INIT_SQL = """
@@ -26,7 +28,7 @@ CREATE TABLE IF NOT EXISTS mapping_overrides (
 """
 
 
-def _result_to_dict(result: MappingResult) -> dict[str, Any]:
+def result_to_dict(result: MappingResult) -> dict[str, Any]:
     return {
         "source_id": result.source_id,
         "target_schema_name": result.target_schema_name,
@@ -38,6 +40,7 @@ def _result_to_dict(result: MappingResult) -> dict[str, Any]:
                 "confidence": m.confidence,
                 "reasoning": m.reasoning,
                 "value_map": m.value_map,
+                "status": m.status,
             }
             for m in result.mappings
         ],
@@ -46,7 +49,7 @@ def _result_to_dict(result: MappingResult) -> dict[str, Any]:
     }
 
 
-def _dict_to_result(data: dict[str, Any]) -> MappingResult:
+def result_from_dict(data: dict[str, Any]) -> MappingResult:
     return MappingResult(
         source_id=data["source_id"],
         target_schema_name=data["target_schema_name"],
@@ -58,6 +61,8 @@ def _dict_to_result(data: dict[str, Any]) -> MappingResult:
                 confidence=m["confidence"],
                 reasoning=m["reasoning"],
                 value_map=m.get("value_map") or {},
+                # Rows saved before review statuses existed are plain proposals.
+                status=m.get("status", "proposed"),
             )
             for m in data["mappings"]
         ],
@@ -82,6 +87,7 @@ class MappingStore:
     def __init__(self, db_path: str) -> None:
         self._db_path = db_path
         self._conn: duckdb.DuckDBPyConnection | None = None
+        self._lock = threading.RLock()
 
     def _get_conn(self) -> duckdb.DuckDBPyConnection:
         if self._conn is None:
@@ -89,6 +95,7 @@ class MappingStore:
             self._conn.execute(_INIT_SQL)
         return self._conn
 
+    @serialized
     def close(self) -> None:
         if self._conn is not None:
             self._conn.close()
@@ -96,6 +103,7 @@ class MappingStore:
 
     # ── save / load ───────────────────────────────────────────────────────
 
+    @serialized
     def save(self, result: MappingResult) -> int:
         """Persist a MappingResult. Returns the new mapping_id."""
         conn = self._get_conn()
@@ -110,11 +118,12 @@ class MappingStore:
                 new_id,
                 result.source_id,
                 result.target_schema_name,
-                json.dumps(_result_to_dict(result)),
+                json.dumps(result_to_dict(result)),
             ],
         )
         return new_id
 
+    @serialized
     def load(self, mapping_id: int) -> MappingResult:
         """Load and reconstruct a MappingResult, applying any stored overrides."""
         conn = self._get_conn()
@@ -126,9 +135,14 @@ class MappingStore:
             raise KeyError(f"No mapping found with id={mapping_id}")
         data: dict[str, Any] = json.loads(row[0])
 
-        # Apply any human overrides on top
+        # Apply human overrides on top, oldest first, so the latest decision
+        # for a column wins (accept, then reject → rejected).
         overrides = conn.execute(
-            "SELECT source_col, override_json FROM mapping_overrides WHERE mapping_id = ?",
+            """
+            SELECT source_col, override_json FROM mapping_overrides
+            WHERE mapping_id = ?
+            ORDER BY id
+            """,
             [mapping_id],
         ).fetchall()
         for src_col, override_json in overrides:
@@ -137,9 +151,39 @@ class MappingStore:
                 if m["source_col"] == src_col:
                     m.update(patch)
                     break
+            else:
+                # The LLM left this column unmapped; a reviewer mapping it by
+                # hand adds a new entry instead of being silently ignored.
+                if "target_col" in patch:
+                    data["mappings"].append(
+                        {
+                            "source_col": src_col,
+                            "target_col": patch["target_col"],
+                            "transform": "rename",
+                            "confidence": 1.0,
+                            "reasoning": "Mapped manually during review.",
+                            "value_map": {},
+                            **patch,
+                        }
+                    )
+                    data["unmapped_source"] = [c for c in data["unmapped_source"] if c != src_col]
 
-        return _dict_to_result(data)
+        return result_from_dict(data)
 
+    @serialized
+    def latest_for_source(self, source_id: str) -> int | None:
+        """Return the id of the most recent mapping saved for *source_id*, if any."""
+        row = (
+            self._get_conn()
+            .execute(
+                "SELECT MAX(id) FROM mapping_configs WHERE source_id = ?",
+                [source_id],
+            )
+            .fetchone()
+        )
+        return int(row[0]) if row and row[0] is not None else None
+
+    @serialized
     def list_for_source(self, source_id: str) -> list[dict[str, Any]]:
         """Return summary rows for all mappings saved for a given source."""
         conn = self._get_conn()
@@ -164,6 +208,7 @@ class MappingStore:
 
     # ── overrides (2.7) ───────────────────────────────────────────────────
 
+    @serialized
     def apply_override(
         self,
         mapping_id: int,

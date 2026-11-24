@@ -1,0 +1,1 @@
+This is an MCP App built with Skybridge. Use the `skybridge` agent skill when planning or updating the codebase (installed at the repo root under .claude/skills/skybridge, pinned in skills-lock.json). The product spec is SPEC.md; keep it up to date.

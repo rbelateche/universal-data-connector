@@ -97,3 +97,32 @@ jobs:
         with:
           file: backend/coverage.xml
         continue-on-error: true
+
+  mcp-app:
+    name: MCP app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: mcp-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The build generates the .skybridge view types the type check relies on.
+      - name: Build
+        run: npm run build
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test

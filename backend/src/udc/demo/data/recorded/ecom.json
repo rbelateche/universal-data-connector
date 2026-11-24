@@ -1,0 +1,21 @@
+{
+  "_provenance": {
+    "kind": "hand-written",
+    "note": "Stand-in for a recorded inference run. Regenerate with `uv run python -m udc.demo record` (needs ANTHROPIC_API_KEY)."
+  },
+  "source_id": "ecom",
+  "target_schema_name": "Product",
+  "mappings": [
+    {"source_col": "handle", "target_col": "drop", "transform": "drop", "confidence": 0.8, "reasoning": "Handle is a URL slug shared by variants, not a variant identifier.", "value_map": {}},
+    {"source_col": "variant_sku", "target_col": "sku", "transform": "rename", "confidence": 0.93, "reasoning": "Variant SKU uniquely identifies each sellable variant.", "value_map": {}},
+    {"source_col": "title", "target_col": "name", "transform": "rename", "confidence": 0.9, "reasoning": "Title is the customer-facing product name.", "value_map": {}},
+    {"source_col": "product_type", "target_col": "category", "transform": "rename", "confidence": 0.85, "reasoning": "Product type holds merchandise categories such as Bags and Shoes.", "value_map": {}},
+    {"source_col": "price", "target_col": "price.amount", "transform": "cast_float", "confidence": 0.88, "reasoning": "Variant price is the current selling price.", "value_map": {}},
+    {"source_col": "compare_at_price", "target_col": "drop", "transform": "drop", "confidence": 0.6, "reasoning": "Compare-at price is the pre-discount price; the core model has no field for it.", "value_map": {}},
+    {"source_col": "option1", "target_col": "color", "transform": "rename", "confidence": 0.52, "reasoning": "Option 1 holds colours for some products (Black, Navy) but sizes for others (40, 38).", "value_map": {}},
+    {"source_col": "option2", "target_col": "size", "transform": "rename", "confidence": 0.49, "reasoning": "Option 2 holds sizes for some products (One Size) but colours for others (Brown, Camel).", "value_map": {}},
+    {"source_col": "inventory_qty", "target_col": "stock_quantity", "transform": "rename", "confidence": 0.9, "reasoning": "Inventory quantity is the stock available to sell.", "value_map": {}}
+  ],
+  "unmapped_source": [],
+  "unmapped_target": ["brand", "price.currency", "material", "created_at"]
+}

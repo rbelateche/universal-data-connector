@@ -163,3 +163,72 @@ def test_multiple_mappings() -> None:
     raw = [{"cust_id": "1", "full_nm": "Alice", "rev": "99.5"}]
     rows = RowTransformer(result).transform(raw)
     assert rows[0] == {"customer_id": 1, "full_name": "Alice", "revenue_usd": 99.5}
+
+
+# ── parse_decimal ─────────────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("1.250,00", 1250.0),  # SAP / European export
+        ("1,250.00", 1250.0),  # US formatting
+        ("1250,5", 1250.5),  # lone decimal comma
+        ("12.000", 12.0),  # SAP quantity with 3 decimals
+        ("1 250,00", 1250.0),  # space as thousands separator
+        ("1'250.00", 1250.0),  # Swiss formatting
+        (" 89.9 ", 89.9),
+        (42, 42.0),
+    ],
+)
+def test_parse_decimal(raw: object, expected: float) -> None:
+    result = _result([_mapping("p", "price.amount", "parse_decimal")])
+    assert RowTransformer(result).transform([{"p": raw}])[0]["price.amount"] == expected
+
+
+@pytest.mark.parametrize("raw", ["N/A", "1,250,000", True])
+def test_parse_decimal_rejects_garbage(raw: object) -> None:
+    result = _result([_mapping("p", "price.amount", "parse_decimal")])
+    with pytest.raises(TransformError):
+        RowTransformer(result).transform([{"p": raw}])
+
+
+def test_parse_date_accepts_sap_basic_format() -> None:
+    result = _result([_mapping("d", "created_at", "parse_date")])
+    out = RowTransformer(result).transform([{"d": "20260315"}])
+    assert out[0]["created_at"].isoformat() == "2026-03-15T00:00:00"
+
+
+# ── dry run / review status ───────────────────────────────────────────────────
+
+
+def test_transform_with_errors_collects_every_failure() -> None:
+    result = _result(
+        [
+            _mapping("p", "price.amount", "cast_float"),
+            _mapping("q", "stock_quantity", "cast_int"),
+            _mapping("n", "name", "rename"),
+        ]
+    )
+    rows = [
+        {"p": "1.250,00", "q": "12.000", "n": "Sac"},
+        {"p": "89.90", "q": "3", "n": "Foulard"},
+    ]
+
+    out, errors = RowTransformer(result).transform_with_errors(rows)
+
+    assert out[0] == {"price.amount": None, "stock_quantity": None, "name": "Sac"}
+    assert out[1] == {"price.amount": 89.9, "stock_quantity": 3, "name": "Foulard"}
+    assert [(e.row_index, e.source_col, e.value) for e in errors] == [
+        (0, "p", "1.250,00"),
+        (0, "q", "12.000"),
+    ]
+    assert "Cannot cast" in errors[0].message
+
+
+def test_rejected_mappings_are_not_applied() -> None:
+    rejected = _mapping("x", "category", "rename")
+    rejected.status = "rejected"
+    result = _result([rejected, _mapping("n", "name", "rename")])
+
+    assert RowTransformer(result).transform([{"x": "FW26", "n": "Sac"}]) == [{"name": "Sac"}]
