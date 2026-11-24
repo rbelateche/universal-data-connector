@@ -17,7 +17,7 @@ from udc.core.config import Settings, get_settings
 from udc.core.source_store import Source, SourceField, SourceStore
 from udc.mapper.canonical import CANONICAL_FIELDS, get_fields
 from udc.mapper.export import export_mapping
-from udc.mapper.mapper import SchemaMapper
+from udc.mapper.mapper import SchemaMapper, describe_api_error
 from udc.mapper.models import FieldMapping, MappingResult
 from udc.mapper.review import coverage, field_statuses, mapping_state, validate
 from udc.mapper.service import DecisionError, decide, infer_mapping
@@ -363,11 +363,7 @@ def infer_source_mapping(
     try:
         mapping_id = infer_mapping(source, mapper, store)
     except anthropic.APIStatusError as exc:
-        raise HTTPException(
-            status_code=502,
-            detail=f"Mapping inference failed: the Claude API returned {exc.status_code} "
-            f"({type(exc).__name__}). Try again later.",
-        ) from exc
+        raise HTTPException(status_code=502, detail=describe_api_error(exc)) from exc
     except anthropic.APIConnectionError as exc:
         raise HTTPException(
             status_code=502,

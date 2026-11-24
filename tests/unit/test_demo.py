@@ -54,7 +54,8 @@ def demo_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Tes
     monkeypatch.setenv("DATABASE_URL", "postgresql://unused@localhost/unused")
     monkeypatch.setenv("DUCKDB_PATH", str(tmp_path / "demo.duckdb"))
     monkeypatch.setenv("SEED_DEMO", "true")
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    # Explicitly empty: an env var beats backend/.env, which may hold a real key
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
     get_settings.cache_clear()
     _reset_singletons()
     with TestClient(create_app()) as client:  # runs the lifespan → seeds

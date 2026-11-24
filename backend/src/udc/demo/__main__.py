@@ -9,10 +9,12 @@
 
 import sys
 
+import anthropic
+
 from udc.core.config import get_settings
 from udc.core.source_store import SourceStore
 from udc.demo.seed import record_demo, seed_demo
-from udc.mapper.mapper import SchemaMapper
+from udc.mapper.mapper import SchemaMapper, describe_api_error
 from udc.mapper.store import MappingStore
 
 
@@ -32,8 +34,15 @@ def main(argv: list[str]) -> int:
             )
             return 1
         mapper = SchemaMapper(api_key=settings.anthropic_api_key, model=settings.anthropic_model)
-        for path in record_demo(mapper, settings.anthropic_model):
-            print(f"Recorded {path}")
+        try:
+            for path in record_demo(mapper, settings.anthropic_model):
+                print(f"Recorded {path}")
+        except anthropic.APIStatusError as exc:
+            print(describe_api_error(exc), file=sys.stderr)
+            return 1
+        except anthropic.APIConnectionError:
+            print("Could not reach the Claude API. Check the network and retry.", file=sys.stderr)
+            return 1
         return 0
     print(__doc__, file=sys.stderr)
     return 2
