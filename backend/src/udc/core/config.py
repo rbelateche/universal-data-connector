@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     # LLM
     anthropic_api_key: str = Field(description="Anthropic API key for Claude")
     anthropic_model: str = Field(
-        default="claude-3-5-sonnet-20241022",
+        default="claude-haiku-5-5",
         description="Claude model to use for schema mapping",
     )
 

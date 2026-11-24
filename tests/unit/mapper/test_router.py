@@ -199,3 +199,21 @@ def test_merge_invalid_strategy_returns_422(client: TestClient) -> None:
         },
     )
     assert resp.status_code == 422
+
+
+# ── Model selection ───────────────────────────────────────────────────────────
+
+
+def test_infer_uses_configured_model(client: TestClient) -> None:
+    """ANTHROPIC_MODEL must reach the mapper (it used to be silently ignored)."""
+    with patch("udc.api.routers.mappings.SchemaMapper") as MockMapper:
+        MockMapper.return_value.infer.return_value = _MOCK_RESULT
+        client.post(
+            "/mappings/infer",
+            json={
+                "source_id": "pg-crm",
+                "target_schema_name": "Contact",
+                "sample_rows": _SAMPLE_ROWS,
+            },
+        )
+    assert MockMapper.call_args.kwargs["model"] == "claude-haiku-5-5"

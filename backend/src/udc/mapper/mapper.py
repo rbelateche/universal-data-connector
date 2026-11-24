@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 from udc.mapper.models import FieldMapping, MappingResult
 from udc.mapper.prompt import MAPPING_TOOL, SYSTEM_PROMPT, build_user_message
 
-_DEFAULT_MODEL = "claude-3-5-haiku-20241022"
+_DEFAULT_MODEL = "claude-haiku-5-5"
 
 
 class SchemaMapper:

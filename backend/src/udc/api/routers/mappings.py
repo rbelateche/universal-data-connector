@@ -87,7 +87,7 @@ def infer_mapping(
     target_schema = CANONICAL_SCHEMAS[body.target_schema_name]
     stats: dict[str, ColumnStats] = SchemaSampler().run(body.sample_rows)
 
-    mapper = SchemaMapper(api_key=settings.anthropic_api_key)
+    mapper = SchemaMapper(api_key=settings.anthropic_api_key, model=settings.anthropic_model)
     result = mapper.infer(
         stats=stats,
         target_schema=target_schema,
