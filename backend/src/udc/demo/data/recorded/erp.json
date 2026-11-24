@@ -1,20 +1,82 @@
 {
   "_provenance": {
-    "kind": "hand-written",
-    "note": "Stand-in for a recorded inference run. Regenerate with `uv run python -m udc.demo record` (needs ANTHROPIC_API_KEY)."
+    "kind": "recorded",
+    "model": "claude-haiku-5-5",
+    "recorded_at": "2026-11-24"
   },
   "source_id": "erp",
   "target_schema_name": "Product",
   "mappings": [
-    {"source_col": "MATNR", "target_col": "sku", "transform": "cast_int", "confidence": 0.82, "reasoning": "Material number is the unique article identifier and its values are numeric.", "value_map": {}},
-    {"source_col": "MAKTX", "target_col": "name", "transform": "rename", "confidence": 0.88, "reasoning": "Material description is the human-readable product name, in French.", "value_map": {}},
-    {"source_col": "MTART", "target_col": "material", "transform": "rename", "confidence": 0.42, "reasoning": "MTART could stand for material, but values like FERT and VERP look like codes.", "value_map": {}},
-    {"source_col": "MATKL", "target_col": "category", "transform": "rename", "confidence": 0.58, "reasoning": "Material group codes (BAGS, ACCS, SHOE) resemble categories but are internal codes.", "value_map": {}},
-    {"source_col": "NETPR", "target_col": "price.amount", "transform": "cast_float", "confidence": 0.9, "reasoning": "Net price is the selling price amount.", "value_map": {}},
-    {"source_col": "WAERS", "target_col": "price.currency", "transform": "rename", "confidence": 0.95, "reasoning": "Currency key holds ISO currency codes such as EUR.", "value_map": {}},
-    {"source_col": "LABST", "target_col": "stock_quantity", "transform": "cast_int", "confidence": 0.8, "reasoning": "Unrestricted stock is the quantity available to sell.", "value_map": {}},
-    {"source_col": "ERSDA", "target_col": "created_at", "transform": "parse_date", "confidence": 0.74, "reasoning": "ERSDA is the SAP creation date, formatted YYYYMMDD.", "value_map": {}}
+    {
+      "source_col": "MATNR",
+      "target_col": "sku",
+      "transform": "rename",
+      "confidence": 0.9,
+      "reasoning": "MATNR is the SAP material number, which serves as the product SKU identifier; values are zero-padded strings so they should be kept as text rather than cast to integer.",
+      "value_map": {}
+    },
+    {
+      "source_col": "MAKTX",
+      "target_col": "name",
+      "transform": "rename",
+      "confidence": 0.95,
+      "reasoning": "MAKTX is the SAP material description, containing human-readable product names like 'Sac Lune cuir grainé noir'.",
+      "value_map": {}
+    },
+    {
+      "source_col": "MTART",
+      "target_col": "category",
+      "transform": "drop",
+      "confidence": 0.4,
+      "reasoning": "MTART is the SAP material type (FERT = finished product, VERP = packaging), which is not a product category and has no clean target; dropping it avoids a misleading mapping.",
+      "value_map": {}
+    },
+    {
+      "source_col": "MATKL",
+      "target_col": "category",
+      "transform": "rename",
+      "confidence": 0.85,
+      "reasoning": "MATKL is the SAP material group (BAGS, ACCS, SHOE, RTW, PACK), which corresponds to product category.",
+      "value_map": {}
+    },
+    {
+      "source_col": "NETPR",
+      "target_col": "price.amount",
+      "transform": "parse_decimal",
+      "confidence": 0.9,
+      "reasoning": "NETPR is the net price stored as a German-formatted string (dot thousands separator, comma decimal), so it needs parsing into a decimal amount.",
+      "value_map": {}
+    },
+    {
+      "source_col": "WAERS",
+      "target_col": "price.currency",
+      "transform": "rename",
+      "confidence": 0.95,
+      "reasoning": "WAERS is the SAP currency key and contains the ISO code EUR, matching price.currency.",
+      "value_map": {}
+    },
+    {
+      "source_col": "LABST",
+      "target_col": "stock_quantity",
+      "transform": "parse_decimal",
+      "confidence": 0.75,
+      "reasoning": "LABST is unrestricted stock quantity, but it is formatted as a decimal string with three fractional zeros (e.g. '12,000'), so it must be parsed and then converted to an integer count.",
+      "value_map": {}
+    },
+    {
+      "source_col": "ERSDA",
+      "target_col": "created_at",
+      "transform": "parse_date",
+      "confidence": 0.9,
+      "reasoning": "ERSDA is the SAP record creation date stored as YYYYMMDD, which maps to created_at after date parsing.",
+      "value_map": {}
+    }
   ],
   "unmapped_source": [],
-  "unmapped_target": ["brand", "color", "size"]
+  "unmapped_target": [
+    "brand",
+    "material",
+    "color",
+    "size"
+  ]
 }

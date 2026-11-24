@@ -142,26 +142,34 @@ schema, refresh the connector / plugin.
 
 ## Demo script
 
-Start from a fresh demo (`make demo-api`). Five prompts, about three minutes:
+Start from a fresh demo (`make demo-api`). The proposals are real `claude-haiku-5-5`
+output, recorded once (see [Known limitations](#known-limitations)). Five prompts,
+about three minutes:
 
 1. **"Which product sources do we have in UDC, and which ones are ready?"**
    → `list_sources`. Three sources, all *needs review*.
-2. **"Show me how the ERP export maps to our Product model."**
-   → `propose_mapping` renders the table. Point out the highlighted rows: MTART
-   (42%, the SAP *material type*, not the material) and MATKL (58%). In the table,
-   reject MTART and accept MATKL; coverage goes to 5/6.
-3. **"Is the ERP mapping ready to export? Fix what's broken."**
-   → `validate_mapping`: `2.450,00` prices and `12.000` quantities fail their
-   casts, and `MATNR` would lose its leading zeros. The agent proposes
-   `parse_decimal` and `rename` and applies them with `update_mapping`, then
-   re-validates: 5/5 sample rows clean, only `brand` left.
+2. **"Show me how the e-commerce export maps to our Product model."**
+   → `propose_mapping` renders the table. The mapper is confident about the SKU,
+   name, category, price and stock, and hesitant about four highlighted columns:
+   `option1`/`option2` (it noticed they hold colours for some products and sizes
+   for others), `handle` (a URL slug) and `compare_at_price`. It proposes to leave
+   them out; accept each in the table (✓ = keep it unmapped). `brand` and
+   `price.currency` stay missing: this export has neither.
+3. **"The PIM colours are codes like NR and IV. Map them to colour names."**
+   → `update_mapping` on `colour_code` with `map_values` (NR → Black, IV → Ivory…),
+   then `validate_mapping`, whose dry-run preview shows names. The mapper had
+   mapped the codes as is at 82%, above the threshold, so it took a human reading
+   the samples to catch it.
 4. **"Where can each required Product field come from across ERP, PIM and e-commerce?"**
-   → `get_coverage` renders the matrix: `brand` only from the PIM, `price.currency`
-   only from the ERP, the PIM has no price, and the e-commerce `option1/option2`
-   need review.
-5. **"Export the ERP mapping as a dbt model."**
-   → `export_mapping` returns `stg_erp__product.sql`, with `brand` as a NULL column
-   and a TODO.
+   → `get_coverage` renders the matrix: `brand` only from the PIM,
+   `price.currency` only from the ERP, and the PIM has no price at all.
+5. **"Is the ERP mapping ready? Export it as a dbt model."**
+   → `validate_mapping`: the dry run is clean (the mapper kept the zero-padded
+   `MATNR` as text, read the German-format prices with `parse_decimal` and the
+   `YYYYMMDD` dates with `parse_date`); `brand` is the only blocker and MTART (the
+   SAP *material type*) is still undecided at 40%, which the agent should ask
+   about rather than decide. Then `export_mapping` returns `stg_erp__product.sql`,
+   with `brand` as a NULL column and a TODO.
 
 Optional sixth prompt, with an API key: paste a few rows of a new export,
 *"Register this as the wms source and map it."*, which runs `register_source`
@@ -171,8 +179,8 @@ then live inference.
 
 | | |
 |---|---|
-| Review table, as proposed | ![](docs/screenshots/mapping-review.png) |
-| After the user's decisions and Validate | ![](docs/screenshots/mapping-review-decided.png) |
+| E-commerce, as proposed: four hesitant proposals for the user | ![](docs/screenshots/mapping-review.png) |
+| ERP after accepting MTART and clicking Validate | ![](docs/screenshots/mapping-review-decided.png) |
 | Coverage matrix | ![](docs/screenshots/coverage-matrix.png) |
 | Skybridge DevTools | ![](docs/screenshots/devtools.png) |
 | In Claude | *placeholder: `docs/screenshots/claude.png`* |
@@ -219,13 +227,19 @@ one line per call:
 - **Live inference needs a key**: without `ANTHROPIC_API_KEY` on the backend, a
   source without a recorded mapping can be registered but not mapped (the tool
   says so).
-- **Recorded proposals are hand-written** until `make demo-record` is run with a
-  key. Each file says so in `_provenance`.
+- **The demo replays recorded proposals**, from `claude-haiku-5-5` on 2026-11-24
+  (see `_provenance` in `backend/src/udc/demo/data/recorded/`), so it needs no key
+  and gives the same result every time. `make demo-record` re-rolls them, and runs
+  differ: MATKL scored 60% on one run and 85% on the next. `refresh=true` runs
+  inference live.
 - **Required fields with no source** (`price.currency` for e-commerce) can only be
   surfaced, not filled: UDC has no constant/default transform.
-- **`option1` / `option2`** change meaning by product type; a per-row mapping
-  needs a conditional transform UDC doesn't have, so the honest outcome is to
-  reject them and source size and color from the PIM.
+- **`option1` / `option2`** change meaning by product type. The mapper itself
+  proposes to leave them out (30–40%); mapping them per row would need a
+  conditional transform UDC doesn't have, so size and color come from the PIM.
+- **Value maps are set from chat**: the table can switch a field to
+  `map_values` but has no editor for the map itself; the agent sets it with
+  `update_mapping` (demo prompt 3).
 - **The model may not see table decisions** (ChatGPT pushes an inline view's
   state only at mount, and Claude can evict view state), so the server
   instructions tell the agent to re-read the mapping before summarising or
