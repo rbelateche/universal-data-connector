@@ -4,11 +4,11 @@ import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
-from udc.api.dependencies import get_mapping_store, get_source_store
+from udc.api.dependencies import check_api_key, get_mapping_store, get_source_store
 from udc.api.routers.mappings import router as mappings_router
 from udc.api.routers.schemas import router as schemas_router
 from udc.api.routers.sources import coverage_router
@@ -55,10 +55,13 @@ def create_app() -> FastAPI:
     async def health() -> dict[str, str]:
         return {"status": "ok", "version": "0.1.0"}
 
-    application.include_router(mappings_router)
-    application.include_router(schemas_router)
-    application.include_router(sources_router)
-    application.include_router(coverage_router)
+    # /health stays open for the host's health checks; everything else is
+    # guarded when REQUIRE_API_KEY is set (public deployments).
+    guarded = [Depends(check_api_key)]
+    application.include_router(mappings_router, dependencies=guarded)
+    application.include_router(schemas_router, dependencies=guarded)
+    application.include_router(sources_router, dependencies=guarded)
+    application.include_router(coverage_router, dependencies=guarded)
 
     return application
 

@@ -32,6 +32,12 @@ class Settings(BaseSettings):
         description="Static API key for the FastAPI backend (override in production)",
     )
 
+    # Public deployments
+    require_api_key: bool = Field(
+        default=False,
+        description="Require the X-Api-Key header (matching API_KEY) on every route but /health",
+    )
+
     # Demo
     seed_demo: bool = Field(
         default=False,
