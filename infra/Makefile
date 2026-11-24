@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 COMPOSE = docker compose -f infra/docker-compose.yml
 
-.PHONY: help dev stop build test lint types check install demo clean
+.PHONY: help dev stop build test lint types check install demo demo-api demo-record clean
 
 help:  ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -39,6 +39,18 @@ check: lint types test  ## Run all quality checks (lint + types + tests)
 # ─── Demo ─────────────────────────────────────────────────────────────────────
 demo:  ## Seed demo data and run the end-to-end demo (Phase 6)
 	@echo "Demo script not yet implemented — see Phase 6"
+
+DEMO_DB = ../data/demo.duckdb
+
+demo-api:  ## Run the API on :8000 with the retail demo data (fresh DuckDB file each start)
+	cd ../backend && rm -f $(DEMO_DB) $(DEMO_DB).wal && \
+	  DUCKDB_PATH=$(DEMO_DB) SEED_DEMO=true \
+	  DATABASE_URL=$${DATABASE_URL:-postgresql://unused@localhost/unused} \
+	  uv run uvicorn udc.api.app:app --port 8000
+
+demo-record:  ## Re-record the demo mapping proposals with live Claude calls (needs ANTHROPIC_API_KEY)
+	cd ../backend && DATABASE_URL=$${DATABASE_URL:-postgresql://unused@localhost/unused} \
+	  uv run python -m udc.demo record
 
 # ─── Housekeeping ─────────────────────────────────────────────────────────────
 clean:  ## Remove __pycache__, .mypy_cache, .ruff_cache, .pytest_cache

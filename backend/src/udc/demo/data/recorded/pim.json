@@ -1,0 +1,20 @@
+{
+  "_provenance": {
+    "kind": "hand-written",
+    "note": "Stand-in for a recorded inference run. Regenerate with `uv run python -m udc.demo record` (needs ANTHROPIC_API_KEY)."
+  },
+  "source_id": "pim",
+  "target_schema_name": "Product",
+  "mappings": [
+    {"source_col": "product_ref", "target_col": "sku", "transform": "rename", "confidence": 0.86, "reasoning": "Product reference uniquely identifies each sellable variant.", "value_map": {}},
+    {"source_col": "title_en", "target_col": "name", "transform": "rename", "confidence": 0.81, "reasoning": "English title matches the core model's preference for English names.", "value_map": {}},
+    {"source_col": "title_fr", "target_col": "drop", "transform": "drop", "confidence": 0.7, "reasoning": "French title duplicates title_en, which already feeds name.", "value_map": {}},
+    {"source_col": "brand_name", "target_col": "brand", "transform": "rename", "confidence": 0.97, "reasoning": "Brand name maps directly to brand.", "value_map": {}},
+    {"source_col": "collection", "target_col": "category", "transform": "rename", "confidence": 0.46, "reasoning": "Collection groups products, but values like FW26 look like seasons rather than categories.", "value_map": {}},
+    {"source_col": "material_composition", "target_col": "material", "transform": "rename", "confidence": 0.9, "reasoning": "Material composition describes the product's materials.", "value_map": {}},
+    {"source_col": "colour_code", "target_col": "color", "transform": "map_values", "confidence": 0.68, "reasoning": "Colour codes need expanding to names; meanings guessed from French initials.", "value_map": {"NR": "Black", "IV": "Ivory", "BL": "Navy", "MR": "Brown", "CA": "Camel"}},
+    {"source_col": "size_label", "target_col": "size", "transform": "rename", "confidence": 0.93, "reasoning": "Size label holds the size of each variant.", "value_map": {}}
+  ],
+  "unmapped_source": [],
+  "unmapped_target": ["price.amount", "price.currency", "stock_quantity", "created_at"]
+}

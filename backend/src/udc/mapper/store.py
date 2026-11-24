@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS mapping_overrides (
 """
 
 
-def _result_to_dict(result: MappingResult) -> dict[str, Any]:
+def result_to_dict(result: MappingResult) -> dict[str, Any]:
     return {
         "source_id": result.source_id,
         "target_schema_name": result.target_schema_name,
@@ -47,7 +47,7 @@ def _result_to_dict(result: MappingResult) -> dict[str, Any]:
     }
 
 
-def _dict_to_result(data: dict[str, Any]) -> MappingResult:
+def result_from_dict(data: dict[str, Any]) -> MappingResult:
     return MappingResult(
         source_id=data["source_id"],
         target_schema_name=data["target_schema_name"],
@@ -113,7 +113,7 @@ class MappingStore:
                 new_id,
                 result.source_id,
                 result.target_schema_name,
-                json.dumps(_result_to_dict(result)),
+                json.dumps(result_to_dict(result)),
             ],
         )
         return new_id
@@ -162,7 +162,7 @@ class MappingStore:
                     )
                     data["unmapped_source"] = [c for c in data["unmapped_source"] if c != src_col]
 
-        return _dict_to_result(data)
+        return result_from_dict(data)
 
     def latest_for_source(self, source_id: str) -> int | None:
         """Return the id of the most recent mapping saved for *source_id*, if any."""
