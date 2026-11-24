@@ -54,6 +54,10 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        # backend/.env also holds keys for other tools (the deploy scripts' tokens).
+        # Rejecting them would stop the API from starting, and pydantic's error
+        # message would print their values.
+        extra="ignore",
     )
 
 

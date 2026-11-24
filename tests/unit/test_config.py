@@ -1,5 +1,7 @@
 """Smoke tests for the Settings config layer."""
 
+from pathlib import Path
+
 import pytest
 
 from udc.core.config import Settings, get_settings
@@ -46,3 +48,21 @@ def test_settings_anthropic_model_default(monkeypatch: pytest.MonkeyPatch) -> No
     settings = Settings()  # type: ignore[call-arg]
 
     assert "claude" in settings.anthropic_model
+
+
+def test_settings_ignore_unknown_env_file_keys(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """backend/.env also holds the deploy scripts' tokens; they must not stop the API."""
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "DATABASE_URL=postgresql://user@localhost/test\n"
+        "RENDER_API_KEY=rnd_test\n"
+        "UDC_DEMO_API_KEY=demo_test\n"
+    )
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    settings = Settings(_env_file=env_file)  # type: ignore[call-arg]
+
+    assert settings.database_url == "postgresql://user@localhost/test"
+    assert not hasattr(settings, "render_api_key")
