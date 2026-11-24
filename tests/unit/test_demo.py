@@ -80,7 +80,8 @@ def test_demo_story(demo_client: TestClient) -> None:
 
     ecom = demo_client.get("/sources/ecom/mapping").json()
     pending = {m["source_col"] for m in ecom["mappings"] if m["state"] == "needs_review"}
-    assert pending == {"option1", "option2"}
+    # compare_at_price: a drop proposed at 60% is a pending decision too
+    assert pending == {"option1", "option2", "compare_at_price"}
     assert ecom["coverage"]["missing_required"] == ["brand", "price.currency"]
 
     cells = {(c["source_id"], c["field"]): c["status"] for c in demo_client.get("/coverage").json()["cells"]}

@@ -118,7 +118,8 @@ def decide(
         if current is None:
             raise DecisionError(f"{source_col} has no proposed mapping to reject.")
     elif status == "accepted":
-        if current is None or current.transform == "drop":
+        # Accepting a drop is allowed: it confirms the column stays out.
+        if current is None:
             raise DecisionError(
                 f"{source_col} has no proposed target to accept. "
                 "Use status 'edited' with a target field to map it."
@@ -148,7 +149,14 @@ def decide(
     effective_map = value_map if value_map is not None else (current.value_map if current else {})
     if patch["status"] != "rejected" and effective_transform == "map_values" and not effective_map:
         raise DecisionError("The map_values transformation needs a value_map.")
-    if current is not None and current.transform == "drop" and transform is None:
+    # Giving a target to a column the mapper wanted to drop maps it as is.
+    if (
+        current is not None
+        and current.transform == "drop"
+        and transform is None
+        and patch["status"] == "edited"
+        and "target_col" in patch
+    ):
         patch["transform"] = "rename"
 
     store.apply_override(mapping_id, source_col, patch)
