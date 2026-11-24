@@ -38,6 +38,7 @@ def _result_to_dict(result: MappingResult) -> dict[str, Any]:
                 "confidence": m.confidence,
                 "reasoning": m.reasoning,
                 "value_map": m.value_map,
+                "status": m.status,
             }
             for m in result.mappings
         ],
@@ -58,6 +59,8 @@ def _dict_to_result(data: dict[str, Any]) -> MappingResult:
                 confidence=m["confidence"],
                 reasoning=m["reasoning"],
                 value_map=m.get("value_map") or {},
+                # Rows saved before review statuses existed are plain proposals.
+                status=m.get("status", "proposed"),
             )
             for m in data["mappings"]
         ],
@@ -126,9 +129,14 @@ class MappingStore:
             raise KeyError(f"No mapping found with id={mapping_id}")
         data: dict[str, Any] = json.loads(row[0])
 
-        # Apply any human overrides on top
+        # Apply human overrides on top, oldest first, so the latest decision
+        # for a column wins (accept, then reject → rejected).
         overrides = conn.execute(
-            "SELECT source_col, override_json FROM mapping_overrides WHERE mapping_id = ?",
+            """
+            SELECT source_col, override_json FROM mapping_overrides
+            WHERE mapping_id = ?
+            ORDER BY id
+            """,
             [mapping_id],
         ).fetchall()
         for src_col, override_json in overrides:
@@ -137,8 +145,36 @@ class MappingStore:
                 if m["source_col"] == src_col:
                     m.update(patch)
                     break
+            else:
+                # The LLM left this column unmapped; a reviewer mapping it by
+                # hand adds a new entry instead of being silently ignored.
+                if "target_col" in patch:
+                    data["mappings"].append(
+                        {
+                            "source_col": src_col,
+                            "target_col": patch["target_col"],
+                            "transform": "rename",
+                            "confidence": 1.0,
+                            "reasoning": "Mapped manually during review.",
+                            "value_map": {},
+                            **patch,
+                        }
+                    )
+                    data["unmapped_source"] = [c for c in data["unmapped_source"] if c != src_col]
 
         return _dict_to_result(data)
+
+    def latest_for_source(self, source_id: str) -> int | None:
+        """Return the id of the most recent mapping saved for *source_id*, if any."""
+        row = (
+            self._get_conn()
+            .execute(
+                "SELECT MAX(id) FROM mapping_configs WHERE source_id = ?",
+                [source_id],
+            )
+            .fetchone()
+        )
+        return int(row[0]) if row and row[0] is not None else None
 
     def list_for_source(self, source_id: str) -> list[dict[str, Any]]:
         """Return summary rows for all mappings saved for a given source."""

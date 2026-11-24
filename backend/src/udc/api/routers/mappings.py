@@ -109,6 +109,7 @@ def infer_mapping(
                 "confidence": m.confidence,
                 "reasoning": m.reasoning,
                 "value_map": m.value_map,
+                "status": m.status,
             }
             for m in result.mappings
         ],
@@ -141,6 +142,7 @@ def get_mapping(
                 "confidence": m.confidence,
                 "reasoning": m.reasoning,
                 "value_map": m.value_map,
+                "status": m.status,
             }
             for m in result.mappings
         ],
